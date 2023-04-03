@@ -108,7 +108,9 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		return nil, err
 	}
 
-	basefilterdoc := bson.D{{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+	basefilterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: db_common.FLD_IS_DELETED, Value: false}}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -251,8 +253,7 @@ func (p *AttendanceMongoDBDao) Update(attendance_id string, indata utils.Map) (u
 
 	filter := bson.D{
 		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendance_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		{Key: db_common.FLD_IS_DELETED, Value: false}}
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {

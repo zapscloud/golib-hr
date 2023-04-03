@@ -106,7 +106,9 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		return nil, err
 	}
 
-	basefilterdoc := bson.D{{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+	basefilterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: db_common.FLD_IS_DELETED, Value: false}}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -137,7 +139,9 @@ func (p *StaffMongoDBDao) Get(account_id string) (utils.Map, error) {
 
 	filter := bson.D{{Key: hr_common.FLD_STAFF_ID, Value: account_id}, {}}
 
-	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
+	filter = append(filter,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Get:: Got filter ", filter)
 
@@ -173,7 +177,9 @@ func (p *StaffMongoDBDao) Find(filter string) (utils.Map, error) {
 	if err != nil {
 		fmt.Println("Error on filter Unmarshal", err)
 	}
-	bfilter = append(bfilter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
+	bfilter = append(bfilter,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Find:: Got filter ", bfilter)
 	singleResult := collection.FindOne(ctx, bfilter)

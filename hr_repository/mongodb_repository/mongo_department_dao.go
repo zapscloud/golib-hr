@@ -107,7 +107,9 @@ func (p *DepartmentMongoDBDao) List(filter string, sort string, skip int64, limi
 		return nil, err
 	}
 
-	basefilterdoc := bson.D{{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+	basefilterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: db_common.FLD_IS_DELETED, Value: false}}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -211,7 +213,8 @@ func (p *DepartmentMongoDBDao) Find(filter string) (utils.Map, error) {
 	if err != nil {
 		fmt.Println("Error on filter Unmarshal", err)
 	}
-	bfilter = append(bfilter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+	bfilter = append(bfilter,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Find:: Got filter ", bfilter)
@@ -272,8 +275,7 @@ func (p *DepartmentMongoDBDao) Update(departmentid string, indata utils.Map) (ut
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{{Key: hr_common.FLD_DEPARTMENT_ID, Value: departmentid}}
-	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {

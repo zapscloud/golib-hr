@@ -2,23 +2,28 @@ package hr_common
 
 import (
 	"log"
+
+	"github.com/zapscloud/golib-dbutils/db_common"
+	"github.com/zapscloud/golib-platform/platform_common"
 )
 
 // HR Module tables
 const (
-	DbHrStaffs       = "hr_staffs"
-	DbHrDepartments  = "hr_departments"
-	DbHrDesignations = "hr_designations"
-	DbHrPositions    = "hr_positions"
-	DbHrAttendances  = "hr_attendances"
-	DbHrLeaves       = "hr_leaves"
-	DbHrHolidays     = "hr_holidays"
+	DbPrefix = db_common.DB_COLLECTION_PREFIX
+
+	DbHrStaffs       = DbPrefix + "hr_staffs"
+	DbHrDepartments  = DbPrefix + "hr_departments"
+	DbHrDesignations = DbPrefix + "hr_designations"
+	DbHrPositions    = DbPrefix + "hr_positions"
+	DbHrAttendances  = DbPrefix + "hr_attendances"
+	DbHrLeaves       = DbPrefix + "hr_leaves"
+	DbHrHolidays     = DbPrefix + "hr_holidays"
 )
 
 // HR Module table fields
 const (
 	// Common fields for all tables
-	FLD_BUSINESS_ID = "business_id"
+	FLD_BUSINESS_ID = platform_common.FLD_BUSINESS_ID
 
 	// Staff table fields
 	FLD_STAFF_ID = "staff_id"

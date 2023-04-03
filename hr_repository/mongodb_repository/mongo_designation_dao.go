@@ -76,7 +76,8 @@ func (p *DesignationMongoDBDao) List(filter string, sort string, skip int64, lim
 		opts.SetLimit(limit)
 	}
 
-	filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+	filterdoc = append(filterdoc,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 	log.Println("Parameter values ", filterdoc, opts)
 	cursor, err := collection.Find(ctx, filterdoc, opts)
@@ -107,7 +108,9 @@ func (p *DesignationMongoDBDao) List(filter string, sort string, skip int64, lim
 		return nil, err
 	}
 
-	basefilterdoc := bson.D{{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+	basefilterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: db_common.FLD_IS_DELETED, Value: false}}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -141,7 +144,8 @@ func (p *DesignationMongoDBDao) Get(designation_id string) (utils.Map, error) {
 
 	filter := bson.D{{Key: hr_common.FLD_DESIGNATION_ID, Value: designation_id}}
 
-	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+	filter = append(filter,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Get:: Got filter ", filter)
@@ -181,7 +185,8 @@ func (p *DesignationMongoDBDao) Find(filter string) (utils.Map, error) {
 	if err != nil {
 		fmt.Println("Error on filter Unmarshal", err)
 	}
-	bfilter = append(bfilter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+	bfilter = append(bfilter,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Find:: Got filter ", bfilter)
@@ -223,8 +228,6 @@ func (p *DesignationMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 		log.Println("Error in insert ", err)
 		return utils.Map{}, err
 	}
-	// Delete the field IS_DELETED
-	delete(indata, db_common.FLD_IS_DELETED)
 
 	log.Println("Inserted a single document: ", insertResult.InsertedID)
 	log.Println("Save - End", indata[hr_common.FLD_DESIGNATION_ID])
@@ -249,8 +252,7 @@ func (p *DesignationMongoDBDao) Update(designation_id string, indata utils.Map) 
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{{Key: hr_common.FLD_DESIGNATION_ID, Value: designation_id}}
-	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {

@@ -106,7 +106,9 @@ func (p *HolidayMongoDBDao) List(filter string, sort string, skip int64, limit i
 		return nil, err
 	}
 
-	basefilterdoc := bson.D{{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+	basefilterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: db_common.FLD_IS_DELETED, Value: false}}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -236,8 +238,7 @@ func (p *HolidayMongoDBDao) Update(account_id string, indata utils.Map) (utils.M
 
 	filter := bson.D{
 		{Key: hr_common.FLD_HOLIDAY_ID, Value: account_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		{Key: db_common.FLD_IS_DELETED, Value: false}}
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {
