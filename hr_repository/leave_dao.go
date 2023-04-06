@@ -9,13 +9,13 @@ import (
 // LeaveDao - Contact DAO Repository
 type LeaveDao interface {
 	// InitializeDao
-	InitializeDao(client utils.Map, businessId string)
+	InitializeDao(client utils.Map, businessId string, staffId string)
 
 	// List
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
 
 	// Get - Get Contact Details
-	Get(leave_id string) (utils.Map, error)
+	Get(leaveId string) (utils.Map, error)
 
 	// Find - Find by code
 	Find(filter string) (utils.Map, error)
@@ -24,17 +24,17 @@ type LeaveDao interface {
 	Create(indata utils.Map) (utils.Map, error)
 
 	// Update - Update Collection
-	Update(leave_id string, indata utils.Map) (utils.Map, error)
+	Update(leaveId string, indata utils.Map) (utils.Map, error)
 
 	// Delete - Delete Collection
-	Delete(leave_id string) (int64, error)
+	Delete(leaveId string) (int64, error)
 
 	// DeleteAll - DeleteAll Collection
 	DeleteAll() (int64, error)
 }
 
 // NewLeaveDao - Contruct Leave Dao
-func NewLeaveDao(client utils.Map, business_id string) LeaveDao {
+func NewLeaveDao(client utils.Map, businessId string, staffId string) LeaveDao {
 	var daoLeave LeaveDao = nil
 
 	// Get DatabaseType and no need to validate error
@@ -52,7 +52,7 @@ func NewLeaveDao(client utils.Map, business_id string) LeaveDao {
 
 	if daoLeave != nil {
 		// Initialize the Dao
-		daoLeave.InitializeDao(client, business_id)
+		daoLeave.InitializeDao(client, businessId, staffId)
 	}
 
 	return daoLeave

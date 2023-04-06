@@ -40,8 +40,11 @@ type attendanceBaseService struct {
 	db_utils.DatabaseService
 	daoAttendance       hr_repository.AttendanceDao
 	daoPlatformBusiness platform_repository.BusinessDao
-	child               AttendanceService
-	businessID          string
+	daoStaff            hr_repository.StaffDao
+
+	child      AttendanceService
+	businessId string
+	staffId    string
 }
 
 func init() {
@@ -65,16 +68,33 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 		return nil, err
 	}
 
-	// Assign the BusinessId
-	p.businessID = businessId
+	// Verify whether the User id data passed, this is optional parameter
+	staffId, _ := utils.IsMemberExist(props, hr_common.FLD_STAFF_ID)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	p.daoAttendance = hr_repository.NewAttendanceDao(p.GetClient(), p.businessID)
+	// Assign the BusinessId & StaffId
+	p.businessId = businessId
+	p.staffId = staffId
+
+	p.daoAttendance = hr_repository.NewAttendanceDao(p.GetClient(), p.businessId, p.staffId)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
+	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessId)
 
-	_, err = p.daoPlatformBusiness.GetDetails(p.businessID)
+	_, err = p.daoPlatformBusiness.GetDetails(p.businessId)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
 		return nil, err
+	}
+
+	// Verify the Staff Exist
+	if len(staffId) > 0 {
+		_, err = p.daoStaff.Get(staffId)
+		if err != nil {
+			err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
+			return nil, err
+		}
 	}
 
 	p.child = &p
@@ -146,7 +166,8 @@ func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
 	}
 
 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
-	indata[hr_common.FLD_BUSINESS_ID] = p.businessID
+	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
+	indata[hr_common.FLD_STAFF_ID] = p.staffId
 	indata[hr_common.FLD_DATETIME] = time.Now()
 	log.Println("Provided Attendance ID:", attendanceId)
 
@@ -180,6 +201,7 @@ func (p *attendanceBaseService) Update(attendance_id string, indata utils.Map) (
 	// Delete the Key fields
 	delete(indata, hr_common.FLD_ATTENDANCE_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
+	delete(indata, hr_common.FLD_STAFF_ID)
 
 	data, err = p.daoAttendance.Update(attendance_id, indata)
 	log.Println("AttendanceService::Update - End ")

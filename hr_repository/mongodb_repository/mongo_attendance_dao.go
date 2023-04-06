@@ -15,17 +15,19 @@ import (
 // AttendanceMongoDBDao - Attendance DAO Repository
 type AttendanceMongoDBDao struct {
 	client     utils.Map
-	businessID string
+	businessId string
+	staffId    string
 }
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func (p *AttendanceMongoDBDao) InitializeDao(client utils.Map, bussinesId string) {
+func (p *AttendanceMongoDBDao) InitializeDao(client utils.Map, bussinesId string, staffId string) {
 	log.Println("Initialize Attendance Mongodb DAO")
 	p.client = client
-	p.businessID = bussinesId
+	p.businessId = bussinesId
+	p.staffId = staffId
 }
 
 // ****************************
@@ -77,8 +79,12 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	}
 
 	filterdoc = append(filterdoc,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	log.Println("Parameter values ", filterdoc, opts)
 	cursor, err := collection.Find(ctx, filterdoc, opts)
 	if err != nil {
@@ -109,8 +115,12 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	}
 
 	basefilterdoc := bson.D{
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		basefilterdoc = append(basefilterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -133,19 +143,24 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 // Get - Get designation details
 //
 // ******************************
-func (p *AttendanceMongoDBDao) Get(attendance_id string) (utils.Map, error) {
+func (p *AttendanceMongoDBDao) Get(attendanceId string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("attendanceMongoDao::Get:: Begin ", attendance_id)
+	log.Println("attendanceMongoDao::Get:: Begin ", attendanceId)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
 	log.Println("Find:: Got Collection ")
 
 	filter := bson.D{
-		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendance_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendanceId},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 
 	log.Println("Get:: Got filter ", filter)
 
@@ -185,8 +200,12 @@ func (p *AttendanceMongoDBDao) Find(filter string) (utils.Map, error) {
 		fmt.Println("Error on filter Unmarshal", err)
 	}
 	bfilter = append(bfilter,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		bfilter = append(bfilter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 
 	log.Println("Find:: Got filter ", bfilter)
 	singleResult := collection.FindOne(ctx, bfilter)
@@ -239,7 +258,7 @@ func (p *AttendanceMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 // Update - Update Collection
 //
 // **************************
-func (p *AttendanceMongoDBDao) Update(attendance_id string, indata utils.Map) (utils.Map, error) {
+func (p *AttendanceMongoDBDao) Update(attendanceId string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("Update - Begin")
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
@@ -252,8 +271,13 @@ func (p *AttendanceMongoDBDao) Update(attendance_id string, indata utils.Map) (u
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{
-		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendance_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendanceId},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {
@@ -269,9 +293,9 @@ func (p *AttendanceMongoDBDao) Update(attendance_id string, indata utils.Map) (u
 // Delete - Delete Collection
 //
 // **************************
-func (p *AttendanceMongoDBDao) Delete(attendance_id string) (int64, error) {
+func (p *AttendanceMongoDBDao) Delete(attendanceId string) (int64, error) {
 
-	log.Println("attendanceMongoDao::Delete - Begin ", attendance_id)
+	log.Println("attendanceMongoDao::Delete - Begin ", attendanceId)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
 	if err != nil {
@@ -284,8 +308,13 @@ func (p *AttendanceMongoDBDao) Delete(attendance_id string) (int64, error) {
 	})
 
 	filter := bson.D{
-		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendance_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendanceId},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 
 	res, err := collection.DeleteOne(ctx, filter, opts)
 	if err != nil {

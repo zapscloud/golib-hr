@@ -15,17 +15,19 @@ import (
 // LeaveMongoDBDao - Leave DAO Repository
 type LeaveMongoDBDao struct {
 	client     utils.Map
-	businessID string
+	businessId string
+	staffId    string
 }
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func (p *LeaveMongoDBDao) InitializeDao(client utils.Map, businessId string) {
+func (p *LeaveMongoDBDao) InitializeDao(client utils.Map, businessId string, staffId string) {
 	log.Println("Initialize Leave Mongodb DAO")
 	p.client = client
-	p.businessID = businessId
+	p.businessId = businessId
+	p.staffId = staffId
 }
 
 // List - List all Collections
@@ -74,8 +76,12 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 
 	filterdoc = append(filterdoc,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 
 	log.Println("Parameter values ", filterdoc, opts)
 	cursor, err := collection.Find(ctx, filterdoc, opts)
@@ -107,8 +113,12 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 
 	basefilterdoc := bson.D{
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		basefilterdoc = append(basefilterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
@@ -139,9 +149,12 @@ func (p *LeaveMongoDBDao) Get(account_id string) (utils.Map, error) {
 
 	filter := bson.D{
 		{Key: hr_common.FLD_LEAVE_ID, Value: account_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
-
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	log.Println("Get:: Got filter ", filter)
 
 	singleResult := collection.FindOne(ctx, filter)
@@ -177,9 +190,12 @@ func (p *LeaveMongoDBDao) Find(filter string) (utils.Map, error) {
 		fmt.Println("Error on filter Unmarshal", err)
 	}
 	bfilter = append(bfilter,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
-
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		bfilter = append(bfilter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	log.Println("Find:: Got filter ", bfilter)
 	singleResult := collection.FindOne(ctx, bfilter)
 	if singleResult.Err() != nil {
@@ -238,8 +254,11 @@ func (p *LeaveMongoDBDao) Update(account_id string, indata utils.Map) (utils.Map
 
 	filter := bson.D{
 		{Key: hr_common.FLD_LEAVE_ID, Value: account_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
-
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
@@ -267,8 +286,11 @@ func (p *LeaveMongoDBDao) Delete(account_id string) (int64, error) {
 
 	filter := bson.D{
 		{Key: hr_common.FLD_LEAVE_ID, Value: account_id},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
-
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 	res, err := collection.DeleteOne(ctx, filter, opts)
 	if err != nil {
 		log.Println("Error in delete ", err)
@@ -292,7 +314,7 @@ func (p *LeaveMongoDBDao) DeleteAll() (int64, error) {
 		CaseLevel: false,
 	})
 
-	filter := bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}
+	filter := bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}
 
 	res, err := collection.DeleteMany(ctx, filter, opts)
 	if err != nil {
