@@ -82,7 +82,7 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessId)
 
-	_, err = p.daoPlatformBusiness.GetDetails(p.businessId)
+	_, err = p.daoPlatformBusiness.Get(p.businessId)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
 		return nil, err

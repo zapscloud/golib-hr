@@ -66,7 +66,7 @@ func NewHolidayService(props utils.Map) (HolidayService, error) {
 	p.daoHoliday = hr_repository.NewHolidayDao(p.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
-	_, err = p.daoPlatformBusiness.GetDetails(p.businessID)
+	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
 		return nil, err
