@@ -16,7 +16,7 @@ import (
 // PositionService - Accounts Service structure
 type PositionService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	GetDetails(position_id string) (utils.Map, error)
+	Get(position_id string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
 	Update(position_id string, indata utils.Map) (utils.Map, error)
@@ -97,7 +97,7 @@ func (p *positionBaseService) List(filter string, sort string, skip int64, limit
 }
 
 // FindByCode - Find By Code
-func (p *positionBaseService) GetDetails(position_id string) (utils.Map, error) {
+func (p *positionBaseService) Get(position_id string) (utils.Map, error) {
 	log.Printf("AccountService::FindByCode::  Begin %v", position_id)
 
 	data, err := p.daoPosition.Get(position_id)

@@ -16,7 +16,7 @@ import (
 // LeaveService - Accounts Service structure
 type LeaveService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	GetDetails(leaveId string) (utils.Map, error)
+	Get(leaveId string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
 	Update(leaveId string, indata utils.Map) (utils.Map, error)
@@ -115,7 +115,7 @@ func (p *leaveBaseService) List(filter string, sort string, skip int64, limit in
 }
 
 // FindByCode - Find By Code
-func (p *leaveBaseService) GetDetails(leaveId string) (utils.Map, error) {
+func (p *leaveBaseService) Get(leaveId string) (utils.Map, error) {
 	log.Printf("AccountService::FindByCode::  Begin %v", leaveId)
 
 	data, err := p.daoLeave.Get(leaveId)

@@ -15,7 +15,7 @@ import (
 // StaffService - Accounts Service structure
 type StaffService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	GetDetails(staff_id string) (utils.Map, error)
+	Get(staff_id string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
 	Update(staff_id string, indata utils.Map) (utils.Map, error)
@@ -96,7 +96,7 @@ func (p *staffBaseService) List(filter string, sort string, skip int64, limit in
 }
 
 // FindByCode - Find By Code
-func (p *staffBaseService) GetDetails(staff_id string) (utils.Map, error) {
+func (p *staffBaseService) Get(staff_id string) (utils.Map, error) {
 	log.Printf("AccountService::FindByCode::  Begin %v", staff_id)
 
 	data, err := p.daoStaff.Get(staff_id)

@@ -16,7 +16,7 @@ import (
 // DesignationService - Designations Service structure
 type DesignationService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	GetDetails(designation_id string) (utils.Map, error)
+	Get(designation_id string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
 	Update(designation_id string, indata utils.Map) (utils.Map, error)
@@ -101,10 +101,10 @@ func (p *designationBaseService) List(filter string, sort string, skip int64, li
 }
 
 // *************************
-// GetDetails - Get Details
+// Get - Get Details
 //
 // *************************
-func (p *designationBaseService) GetDetails(designation_id string) (utils.Map, error) {
+func (p *designationBaseService) Get(designation_id string) (utils.Map, error) {
 	log.Printf("DesignationService::FindByCode::  Begin %v", designation_id)
 
 	data, err := p.daoDesignation.Get(designation_id)

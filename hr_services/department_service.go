@@ -16,7 +16,7 @@ import (
 // DepartmentService - Departments Service structure
 type DepartmentService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	GetDetails(departmentid string) (utils.Map, error)
+	Get(departmentid string) (utils.Map, error)
 	GetDeptCodeDetails(departmentcode string) (utils.Map, error)
 
 	Find(filter string) (utils.Map, error)
@@ -110,7 +110,7 @@ func (p *departmentBaseService) GetDeptCodeDetails(department_code string) (util
 }
 
 // FindByCode - Find By Code
-func (p *departmentBaseService) GetDetails(department_id string) (utils.Map, error) {
+func (p *departmentBaseService) Get(department_id string) (utils.Map, error) {
 	log.Printf("DepartmentService::FindByCode::  Begin %v", department_id)
 
 	data, err := p.daoDepartment.Get(department_id)

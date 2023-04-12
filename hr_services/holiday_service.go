@@ -16,7 +16,7 @@ import (
 // HolidayService - Accounts Service structure
 type HolidayService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	GetDetails(holiday_id string) (utils.Map, error)
+	Get(holiday_id string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
 	Update(holiday_id string, indata utils.Map) (utils.Map, error)
@@ -97,7 +97,7 @@ func (p *holidayBaseService) List(filter string, sort string, skip int64, limit 
 }
 
 // FindByCode - Find By Code
-func (p *holidayBaseService) GetDetails(holiday_id string) (utils.Map, error) {
+func (p *holidayBaseService) Get(holiday_id string) (utils.Map, error) {
 	log.Printf("AccountService::FindByCode::  Begin %v", holiday_id)
 
 	data, err := p.daoHoliday.Get(holiday_id)

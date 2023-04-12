@@ -125,7 +125,7 @@ func (p *attendanceBaseService) List(filter string, sort string, skip int64, lim
 }
 
 // *************************
-// GetDetails - Get Details
+// Get - Get Details
 //
 // *************************
 func (p *attendanceBaseService) Get(appattendance_id string) (utils.Map, error) {
