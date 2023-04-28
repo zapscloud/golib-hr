@@ -68,6 +68,7 @@ const (
 	FLD_LEAVE_TO          = "leave_to"
 	FLD_LEAVE_DESCRIPTION = "leave_description"
 	FLD_LEAVE_APPROVED    = "leave_approved"
+	FLD_LEAVE_TYPE        = "leave_type"
 
 	// Shift Table
 	FLD_SHIFT_ID          = "shift_id"
