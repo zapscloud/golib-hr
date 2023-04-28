@@ -11,13 +11,16 @@ import (
 const (
 	DbPrefix = db_common.DB_COLLECTION_PREFIX
 
-	DbHrStaffs       = DbPrefix + "hr_staffs"
-	DbHrDepartments  = DbPrefix + "hr_departments"
-	DbHrDesignations = DbPrefix + "hr_designations"
-	DbHrPositions    = DbPrefix + "hr_positions"
-	DbHrAttendances  = DbPrefix + "hr_attendances"
-	DbHrLeaves       = DbPrefix + "hr_leaves"
-	DbHrHolidays     = DbPrefix + "hr_holidays"
+	DbHrStaffs        = DbPrefix + "hr_staffs"
+	DbHrStaffTypes    = DbPrefix + "hr_staff_types"
+	DbHrDepartments   = DbPrefix + "hr_departments"
+	DbHrDesignations  = DbPrefix + "hr_designations"
+	DbHrPositions     = DbPrefix + "hr_positions"
+	DbHrAttendances   = DbPrefix + "hr_attendances"
+	DbHrLeaves        = DbPrefix + "hr_leaves"
+	DbHrHolidays      = DbPrefix + "hr_holidays"
+	DbHrShifts        = DbPrefix + "hr_shifts"
+	DbHrWorkLocations = DbPrefix + "hr_work_locations"
 )
 
 // HR Module table fields
@@ -27,6 +30,9 @@ const (
 
 	// Staff table fields
 	FLD_STAFF_ID = "staff_id"
+
+	// StaffType table fields
+	FLD_STAFFTYPE_ID = "staff_type_id"
 
 	// Department table fields
 	FLD_DEPARTMENT_ID   = "department_id"
@@ -60,6 +66,17 @@ const (
 	FLD_LEAVE_TO          = "leave_to"
 	FLD_LEAVE_DESCRIPTION = "leave_description"
 	FLD_LEAVE_APPROVED    = "leave_approved"
+
+	// Shift Table
+	FLD_SHIFT_ID          = "shift_id"
+	FLD_SHIFT_FROM        = "shift_from"
+	FLD_SHIFT_TO          = "shift_to"
+	FLD_SHIFT_DESCRIPTION = "shift_description"
+
+	// Work Location Table
+	FLD_WORKLOCATION_ID          = "work_location_id"
+	FLD_WORKLOCATION_NAME        = "work_location_name"
+	FLD_WORKLOCATION_DESCRIPTION = "work_location_description"
 )
 
 func init() {

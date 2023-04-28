@@ -3,6 +3,7 @@ package hr_services
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/db_utils"
@@ -12,14 +13,14 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// StaffService - Accounts Service structure
-type StaffService interface {
+// ShiftService - Accounts Service structure
+type ShiftService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	Get(staff_id string) (utils.Map, error)
+	Get(shiftId string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
-	Update(staff_id string, indata utils.Map) (utils.Map, error)
-	Delete(staff_id string, delete_permanent bool) error
+	Update(shiftId string, indata utils.Map) (utils.Map, error)
+	Delete(shiftId string, delete_permanent bool) error
 
 	BeginTransaction()
 	CommitTransaction()
@@ -28,23 +29,24 @@ type StaffService interface {
 	EndService()
 }
 
-// staffBaseService - Accounts Service structure
-type staffBaseService struct {
+// shiftBaseService - Accounts Service structure
+type shiftBaseService struct {
 	db_utils.DatabaseService
-	daoStaff            hr_repository.StaffDao
+	daoShift            hr_repository.ShiftDao
 	daoPlatformBusiness platform_repository.BusinessDao
-	child               StaffService
-	businessID          string
+
+	child      ShiftService
+	businessId string
 }
 
 func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func NewStaffService(props utils.Map) (StaffService, error) {
+func NewShiftService(props utils.Map) (ShiftService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	p := staffBaseService{}
+	p := shiftBaseService{}
 
 	// Open Database Service
 	err := p.OpenDatabaseService(props)
@@ -58,14 +60,14 @@ func NewStaffService(props utils.Map) (StaffService, error) {
 		return nil, err
 	}
 
-	// Assign the BusinessId
-	p.businessID = businessId
+	// Assign the BusinessId & StaffId
+	p.businessId = businessId
 
 	// Instantiate other services
-	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessID)
+	p.daoShift = hr_repository.NewShiftDao(p.GetClient(), p.businessId)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
-	_, err = p.daoPlatformBusiness.Get(p.businessID)
+	_, err = p.daoPlatformBusiness.Get(p.businessId)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
 		return nil, err
@@ -76,17 +78,17 @@ func NewStaffService(props utils.Map) (StaffService, error) {
 	return &p, nil
 }
 
-func (p *staffBaseService) EndService() {
+func (p *shiftBaseService) EndService() {
 	p.CloseDatabaseService()
 }
 
 // List - List All records
-func (p *staffBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *shiftBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
 	log.Println("AccountService::FindAll - Begin")
 
-	daoStaff := p.daoStaff
-	response, err := daoStaff.List(filter, sort, skip, limit)
+	daoShift := p.daoShift
+	response, err := daoShift.List(filter, sort, skip, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -96,43 +98,46 @@ func (p *staffBaseService) List(filter string, sort string, skip int64, limit in
 }
 
 // FindByCode - Find By Code
-func (p *staffBaseService) Get(staff_id string) (utils.Map, error) {
-	log.Printf("AccountService::FindByCode::  Begin %v", staff_id)
+func (p *shiftBaseService) Get(shiftId string) (utils.Map, error) {
+	log.Printf("AccountService::FindByCode::  Begin %v", shiftId)
 
-	data, err := p.daoStaff.Get(staff_id)
+	data, err := p.daoShift.Get(shiftId)
 	log.Println("AccountService::FindByCode:: End ", err)
 	return data, err
 }
 
-func (p *staffBaseService) Find(filter string) (utils.Map, error) {
+func (p *shiftBaseService) Find(filter string) (utils.Map, error) {
 	fmt.Println("AccountService::FindByCode::  Begin ", filter)
 
-	data, err := p.daoStaff.Find(filter)
+	data, err := p.daoShift.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)
 	return data, err
 }
 
-func (p *staffBaseService) Create(indata utils.Map) (utils.Map, error) {
+func (p *shiftBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("UserService::Create - Begin")
 
-	dataval, dataok := indata[hr_common.FLD_STAFF_ID]
-	if !dataok {
-		uid := utils.GenerateUniqueId("stf")
-		log.Println("Unique Account ID", uid)
-		indata[hr_common.FLD_STAFF_ID] = uid
-		dataval = indata[hr_common.FLD_STAFF_ID]
-	}
-	indata[hr_common.FLD_BUSINESS_ID] = p.businessID
-	log.Println("Provided Account ID:", dataval)
+	var shiftId string
 
-	_, err := p.daoStaff.Get(dataval.(string))
+	dataval, dataok := indata[hr_common.FLD_SHIFT_ID]
+	if dataok {
+		shiftId = strings.ToLower(dataval.(string))
+	} else {
+		shiftId = utils.GenerateUniqueId("shift")
+		log.Println("Unique Account ID", shiftId)
+	}
+	indata[hr_common.FLD_SHIFT_ID] = shiftId
+	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
+	log.Println("Provided Account ID:", shiftId)
+
+	_, err := p.daoShift.Get(shiftId)
 	if err == nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
 		return indata, err
 	}
 
-	insertResult, err := p.daoStaff.Create(indata)
+	insertResult, err := p.daoShift.Create(indata)
 	if err != nil {
 		return indata, err
 	}
@@ -141,41 +146,45 @@ func (p *staffBaseService) Create(indata utils.Map) (utils.Map, error) {
 }
 
 // Update - Update Service
-func (p *staffBaseService) Update(staff_id string, indata utils.Map) (utils.Map, error) {
+func (p *shiftBaseService) Update(shiftId string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("AccountService::Update - Begin")
 
-	data, err := p.daoStaff.Get(staff_id)
+	data, err := p.daoShift.Get(shiftId)
 	if err != nil {
 		return data, err
 	}
 
-	data, err = p.daoStaff.Update(staff_id, indata)
+	// Delete key fields
+	delete(indata, hr_common.FLD_SHIFT_ID)
+	delete(indata, hr_common.FLD_BUSINESS_ID)
+
+	data, err = p.daoShift.Update(shiftId, indata)
 	log.Println("AccountService::Update - End ")
 	return data, err
 }
 
 // Delete - Delete Service
-func (p *staffBaseService) Delete(staff_id string, delete_permanent bool) error {
+func (p *shiftBaseService) Delete(shiftId string, delete_permanent bool) error {
 
-	log.Println("AccountService::Delete - Begin", staff_id)
+	log.Println("AccountService::Delete - Begin", shiftId)
 
-	daoStaff := p.daoStaff
+	daoShift := p.daoShift
 	if delete_permanent {
-		result, err := daoStaff.Delete(staff_id)
+		result, err := daoShift.Delete(shiftId)
 		if err != nil {
 			return err
 		}
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(staff_id, indata)
+		data, err := p.Update(shiftId, indata)
 		if err != nil {
 			return err
 		}
 		log.Println("Update for Delete Flag", data)
 	}
 
-	log.Printf("StaffService::Delete - End")
+	log.Printf("ShiftService::Delete - End")
 	return nil
 }

@@ -12,14 +12,14 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// StaffService - Accounts Service structure
-type StaffService interface {
+// StaffTypeService - Accounts Service structure
+type StaffTypeService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	Get(staff_id string) (utils.Map, error)
+	Get(staffTypeId string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
-	Update(staff_id string, indata utils.Map) (utils.Map, error)
-	Delete(staff_id string, delete_permanent bool) error
+	Update(staffTypeId string, indata utils.Map) (utils.Map, error)
+	Delete(staffTypeId string, delete_permanent bool) error
 
 	BeginTransaction()
 	CommitTransaction()
@@ -28,12 +28,12 @@ type StaffService interface {
 	EndService()
 }
 
-// staffBaseService - Accounts Service structure
-type staffBaseService struct {
+// staffTypeBaseService - Accounts Service structure
+type staffTypeBaseService struct {
 	db_utils.DatabaseService
-	daoStaff            hr_repository.StaffDao
+	daoStaffType        hr_repository.StaffTypeDao
 	daoPlatformBusiness platform_repository.BusinessDao
-	child               StaffService
+	child               StaffTypeService
 	businessID          string
 }
 
@@ -41,10 +41,10 @@ func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func NewStaffService(props utils.Map) (StaffService, error) {
+func NewStaffTypeService(props utils.Map) (StaffTypeService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	p := staffBaseService{}
+	p := staffTypeBaseService{}
 
 	// Open Database Service
 	err := p.OpenDatabaseService(props)
@@ -62,7 +62,7 @@ func NewStaffService(props utils.Map) (StaffService, error) {
 	p.businessID = businessId
 
 	// Instantiate other services
-	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessID)
+	p.daoStaffType = hr_repository.NewStaffTypeDao(p.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
@@ -76,17 +76,17 @@ func NewStaffService(props utils.Map) (StaffService, error) {
 	return &p, nil
 }
 
-func (p *staffBaseService) EndService() {
+func (p *staffTypeBaseService) EndService() {
 	p.CloseDatabaseService()
 }
 
 // List - List All records
-func (p *staffBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *staffTypeBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
 	log.Println("AccountService::FindAll - Begin")
 
-	daoStaff := p.daoStaff
-	response, err := daoStaff.List(filter, sort, skip, limit)
+	daoStaffType := p.daoStaffType
+	response, err := daoStaffType.List(filter, sort, skip, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -96,43 +96,43 @@ func (p *staffBaseService) List(filter string, sort string, skip int64, limit in
 }
 
 // FindByCode - Find By Code
-func (p *staffBaseService) Get(staff_id string) (utils.Map, error) {
-	log.Printf("AccountService::FindByCode::  Begin %v", staff_id)
+func (p *staffTypeBaseService) Get(staffTypeId string) (utils.Map, error) {
+	log.Printf("AccountService::FindByCode::  Begin %v", staffTypeId)
 
-	data, err := p.daoStaff.Get(staff_id)
+	data, err := p.daoStaffType.Get(staffTypeId)
 	log.Println("AccountService::FindByCode:: End ", err)
 	return data, err
 }
 
-func (p *staffBaseService) Find(filter string) (utils.Map, error) {
+func (p *staffTypeBaseService) Find(filter string) (utils.Map, error) {
 	fmt.Println("AccountService::FindByCode::  Begin ", filter)
 
-	data, err := p.daoStaff.Find(filter)
+	data, err := p.daoStaffType.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)
 	return data, err
 }
 
-func (p *staffBaseService) Create(indata utils.Map) (utils.Map, error) {
+func (p *staffTypeBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("UserService::Create - Begin")
 
-	dataval, dataok := indata[hr_common.FLD_STAFF_ID]
+	dataval, dataok := indata[hr_common.FLD_STAFFTYPE_ID]
 	if !dataok {
-		uid := utils.GenerateUniqueId("stf")
+		uid := utils.GenerateUniqueId("stftyp")
 		log.Println("Unique Account ID", uid)
-		indata[hr_common.FLD_STAFF_ID] = uid
-		dataval = indata[hr_common.FLD_STAFF_ID]
+		indata[hr_common.FLD_STAFFTYPE_ID] = uid
+		dataval = indata[hr_common.FLD_STAFFTYPE_ID]
 	}
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessID
 	log.Println("Provided Account ID:", dataval)
 
-	_, err := p.daoStaff.Get(dataval.(string))
+	_, err := p.daoStaffType.Get(dataval.(string))
 	if err == nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
 		return indata, err
 	}
 
-	insertResult, err := p.daoStaff.Create(indata)
+	insertResult, err := p.daoStaffType.Create(indata)
 	if err != nil {
 		return indata, err
 	}
@@ -141,41 +141,41 @@ func (p *staffBaseService) Create(indata utils.Map) (utils.Map, error) {
 }
 
 // Update - Update Service
-func (p *staffBaseService) Update(staff_id string, indata utils.Map) (utils.Map, error) {
+func (p *staffTypeBaseService) Update(staffTypeId string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("AccountService::Update - Begin")
 
-	data, err := p.daoStaff.Get(staff_id)
+	data, err := p.daoStaffType.Get(staffTypeId)
 	if err != nil {
 		return data, err
 	}
 
-	data, err = p.daoStaff.Update(staff_id, indata)
+	data, err = p.daoStaffType.Update(staffTypeId, indata)
 	log.Println("AccountService::Update - End ")
 	return data, err
 }
 
 // Delete - Delete Service
-func (p *staffBaseService) Delete(staff_id string, delete_permanent bool) error {
+func (p *staffTypeBaseService) Delete(staffTypeId string, delete_permanent bool) error {
 
-	log.Println("AccountService::Delete - Begin", staff_id)
+	log.Println("AccountService::Delete - Begin", staffTypeId)
 
-	daoStaff := p.daoStaff
+	daoStaffType := p.daoStaffType
 	if delete_permanent {
-		result, err := daoStaff.Delete(staff_id)
+		result, err := daoStaffType.Delete(staffTypeId)
 		if err != nil {
 			return err
 		}
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(staff_id, indata)
+		data, err := p.Update(staffTypeId, indata)
 		if err != nil {
 			return err
 		}
 		log.Println("Update for Delete Flag", data)
 	}
 
-	log.Printf("StaffService::Delete - End")
+	log.Printf("StaffTypeService::Delete - End")
 	return nil
 }
