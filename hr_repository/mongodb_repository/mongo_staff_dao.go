@@ -89,16 +89,16 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		return nil, err
 	}
 
-	log.Println("End - Find All Collection Dao", results)
+	//log.Println("End - Find All Collection Dao", results)
 
 	listdata := []utils.Map{}
-	for idx, value := range results {
-		log.Println("Item ", idx)
+	for _, value := range results {
+		//log.Println("Item ", idx)
 		delete(value, db_common.FLD_DEFAULT_ID)
 		listdata = append(listdata, value)
 	}
 
-	log.Println("End - Find All Collection Dao", listdata)
+	//log.Println("End - Find All Collection Dao", listdata)
 
 	log.Println("Parameter values ", filterdoc)
 	filtercount, err := collection.CountDocuments(ctx, filterdoc)
