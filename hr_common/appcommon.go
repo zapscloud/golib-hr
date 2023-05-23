@@ -29,7 +29,8 @@ const (
 	FLD_BUSINESS_ID = platform_common.FLD_BUSINESS_ID
 
 	// Staff table fields
-	FLD_STAFF_ID = "staff_id"
+	FLD_STAFF_ID   = "staff_id"
+	FLD_STAFF_DATA = "staff_data"
 
 	// StaffType table fields
 	FLD_STAFFTYPE_ID          = "staff_type_id"
