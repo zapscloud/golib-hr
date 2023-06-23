@@ -53,7 +53,7 @@ func NewStaffTypeService(props utils.Map) (StaffTypeService, error) {
 	}
 
 	// Verify whether the business id data passed
-	businessId, err := utils.IsMemberExist(props, hr_common.FLD_BUSINESS_ID)
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
 		return nil, err
 	}

@@ -57,12 +57,12 @@ func NewLeaveService(props utils.Map) (LeaveService, error) {
 	}
 
 	// Verify whether the business id data passed
-	businessId, err := utils.IsMemberExist(props, hr_common.FLD_BUSINESS_ID)
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
 		return nil, err
 	}
 	// Verify whether the User id data passed, this is optional parameter
-	staffId, _ := utils.IsMemberExist(props, hr_common.FLD_STAFF_ID)
+	staffId, _ := utils.GetMemberDataStr(props, hr_common.FLD_STAFF_ID)
 	// if err != nil {
 	// 	return nil, err
 	// }
