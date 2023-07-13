@@ -59,12 +59,12 @@ func NewLeaveService(props utils.Map) (LeaveService, error) {
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		return nil, err
+		return p.errorReturn(err)
 	}
 	// Verify whether the User id data passed, this is optional parameter
 	staffId, _ := utils.GetMemberDataStr(props, hr_common.FLD_STAFF_ID)
 	// if err != nil {
-	// 	return nil, err
+	// 	return p.errorReturn(err)
 	// }
 
 	// Assign the BusinessId & StaffId
@@ -79,14 +79,14 @@ func NewLeaveService(props utils.Map) (LeaveService, error) {
 	_, err = p.daoPlatformBusiness.Get(p.businessId)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
-		return nil, err
+		return p.errorReturn(err)
 	}
 	// Verify the Staff Exist
 	if len(staffId) > 0 {
 		_, err = p.daoStaff.Get(staffId)
 		if err != nil {
 			err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
-			return nil, err
+			return p.errorReturn(err)
 		}
 	}
 
@@ -206,4 +206,10 @@ func (p *leaveBaseService) Delete(leaveId string, delete_permanent bool) error {
 
 	log.Printf("LeaveService::Delete - End")
 	return nil
+}
+
+func (p *leaveBaseService) errorReturn(err error) (LeaveService, error) {
+	// Close the Database Connection
+	p.CloseDatabaseService()
+	return nil, err
 }
