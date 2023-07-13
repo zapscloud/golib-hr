@@ -65,13 +65,13 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		return nil, err
+		return p.errorReturn(err)
 	}
 
 	// Verify whether the User id data passed, this is optional parameter
 	staffId, _ := utils.GetMemberDataStr(props, hr_common.FLD_STAFF_ID)
 	// if err != nil {
-	// 	return nil, err
+	// 	return p.errorReturn(err)
 	// }
 
 	// Assign the BusinessId & StaffId
@@ -85,7 +85,7 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	_, err = p.daoPlatformBusiness.Get(p.businessId)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
-		return nil, err
+		return p.errorReturn(err)
 	}
 
 	// Verify the Staff Exist
@@ -93,7 +93,7 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 		_, err = p.daoStaff.Get(staffId)
 		if err != nil {
 			err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
-			return nil, err
+			return p.errorReturn(err)
 		}
 	}
 
@@ -234,4 +234,10 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 
 	log.Printf("AttendanceService::Delete - End")
 	return nil
+}
+
+func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error) {
+	// Close the Database Connection
+	p.CloseDatabaseService()
+	return nil, err
 }

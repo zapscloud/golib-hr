@@ -55,7 +55,7 @@ func NewStaffTypeService(props utils.Map) (StaffTypeService, error) {
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		return nil, err
+		return p.errorReturn(err)
 	}
 
 	// Assign the BusinessId
@@ -68,7 +68,7 @@ func NewStaffTypeService(props utils.Map) (StaffTypeService, error) {
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
-		return nil, err
+		return p.errorReturn(err)
 	}
 
 	p.child = &p
@@ -178,4 +178,10 @@ func (p *staffTypeBaseService) Delete(staffTypeId string, delete_permanent bool)
 
 	log.Printf("StaffTypeService::Delete - End")
 	return nil
+}
+
+func (p *staffTypeBaseService) errorReturn(err error) (StaffTypeService, error) {
+	// Close the Database Connection
+	p.CloseDatabaseService()
+	return nil, err
 }

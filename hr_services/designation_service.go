@@ -57,7 +57,7 @@ func NewDesignationService(props utils.Map) (DesignationService, error) {
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		return nil, err
+		return p.errorReturn(err)
 	}
 
 	// Assign the BusinessId
@@ -70,7 +70,7 @@ func NewDesignationService(props utils.Map) (DesignationService, error) {
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
-		return nil, err
+		return p.errorReturn(err)
 	}
 
 	p.child = &p
@@ -207,4 +207,10 @@ func (p *designationBaseService) Delete(designation_id string, delete_permanent 
 
 	log.Printf("DesignationService::Delete - End")
 	return nil
+}
+
+func (p *designationBaseService) errorReturn(err error) (DesignationService, error) {
+	// Close the Database Connection
+	p.CloseDatabaseService()
+	return nil, err
 }
