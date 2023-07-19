@@ -168,7 +168,7 @@ func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
 	indata[hr_common.FLD_STAFF_ID] = p.staffId
-	indata[hr_common.FLD_DATETIME] = time.Now().Format(time.RFC3339)
+	indata[hr_common.FLD_DATETIME] = time.Now().Format("2006-01-02 15:04:05")
 	log.Println("Provided Attendance ID:", attendanceId)
 
 	_, err := p.daoAttendance.Get(attendanceId)
