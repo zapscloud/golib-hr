@@ -21,6 +21,7 @@ const (
 	DbHrHolidays      = DbPrefix + "hr_holidays"
 	DbHrShifts        = DbPrefix + "hr_shifts"
 	DbHrWorkLocations = DbPrefix + "hr_work_locations"
+	DbHrLeaveTypes    = DbPrefix + "hr_leave_types"
 )
 
 // HR Module table fields
@@ -36,6 +37,11 @@ const (
 	FLD_STAFFTYPE_ID          = "staff_type_id"
 	FLD_STAFFTYPE_NAME        = "staff_type_name"
 	FLD_STAFFTYPE_DESCRIPTION = "staff_type_description"
+
+	// Leave Type table fields
+	FLD_LEAVETYPE_ID   = "leave_type_id"
+	FLD_LEAVETYPE_NAME = "leave_type_name"
+	FLD_LEAVETYPE_DESC = "leave_type_desc"
 
 	// Department table fields
 	FLD_DEPARTMENT_ID   = "department_id"
