@@ -51,7 +51,8 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	filterdoc := bson.D{}
 	if len(filter) > 0 {
 		// filters, _ := strconv.Unquote(string(filter))
-		err = bson.UnmarshalExtJSON([]byte(filter), true, &filterdoc)
+		// 20230803 Karthi: The second parameter should be false to interpret "$date" in JSON
+		err = bson.UnmarshalExtJSON([]byte(filter), false, &filterdoc)
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
 			log.Println(filterdoc)
