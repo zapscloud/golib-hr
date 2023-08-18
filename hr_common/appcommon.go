@@ -32,6 +32,7 @@ const (
 	// Staff table fields
 	FLD_STAFF_ID   = "staff_id"
 	FLD_STAFF_DATA = "staff_data"
+	FLD_STAF_INFO  = "staff_info"
 
 	// StaffType table fields
 	FLD_STAFFTYPE_ID          = "staff_type_id"

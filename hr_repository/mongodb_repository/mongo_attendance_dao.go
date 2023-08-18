@@ -7,6 +7,7 @@ import (
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/mongo_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
+	"github.com/zapscloud/golib-platform/platform_common"
 	"github.com/zapscloud/golib-utils/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -46,8 +47,6 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 
 	log.Println("Get Collection - Find All Collection Dao", filter, len(filter), sort, len(sort))
 
-	opts := options.Find()
-
 	filterdoc := bson.D{}
 	if len(filter) > 0 {
 		// filters, _ := strconv.Unquote(string(filter))
@@ -55,30 +54,28 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		err = bson.UnmarshalExtJSON([]byte(filter), false, &filterdoc)
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
-			log.Println(filterdoc)
 		}
 	}
 
-	if len(sort) > 0 {
-		var sortdoc interface{}
-		err = bson.UnmarshalExtJSON([]byte(sort), true, &sortdoc)
-		if err != nil {
-			log.Println("Sort Unmarshal Error ", sort)
-		} else {
-			opts.SetSort(sortdoc)
-		}
-	}
+	// All Stages
+	stages := []bson.M{}
 
-	if skip > 0 {
-		log.Println(filterdoc)
-		opts.SetSkip(skip)
-	}
+	// Remove unwanted fields
+	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
+	stages = append(stages, unsetStage)
 
-	if limit > 0 {
-		log.Println(filterdoc)
-		opts.SetLimit(limit)
+	// Lookup Stage
+	lookupStage := bson.M{
+		"$lookup": bson.M{
+			"from":         platform_common.DbPlatformAppUsers,
+			"localField":   hr_common.FLD_STAFF_ID,
+			"foreignField": platform_common.FLD_APP_USER_ID,
+			"as":           hr_common.FLD_STAF_INFO,
+		},
 	}
+	stages = append(stages, lookupStage)
 
+	// Match Stage
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
@@ -86,8 +83,32 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	if len(p.staffId) > 0 {
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
-	log.Println("Parameter values ", filterdoc, opts)
-	cursor, err := collection.Find(ctx, filterdoc, opts)
+
+	matchStage := bson.M{"$match": filterdoc}
+	stages = append(stages, matchStage)
+
+	if len(sort) > 0 {
+		var sortdoc interface{}
+		err = bson.UnmarshalExtJSON([]byte(sort), true, &sortdoc)
+		if err != nil {
+			log.Println("Sort Unmarshal Error ", sort)
+		} else {
+			sortStage := bson.M{"$sort": sortdoc}
+			stages = append(stages, sortStage)
+		}
+	}
+
+	if skip > 0 {
+		skipStage := bson.M{"$skip": skip}
+		stages = append(stages, skipStage)
+	}
+
+	if limit > 0 {
+		limitStage := bson.M{"$limit": limit}
+		stages = append(stages, limitStage)
+	}
+
+	cursor, err := collection.Aggregate(ctx, stages)
 	if err != nil {
 		return nil, err
 	}
@@ -98,23 +119,10 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		return nil, err
 	}
 
-	//log.Println("End - Find All Collection Dao", results)
-
-	listdata := []utils.Map{}
-	for _, value := range results {
-		//log.Println("Item ", idx)
-		value = db_common.AmendFldsForGet(value)
-		listdata = append(listdata, value)
-	}
-
-	//log.Println("End - Find All Collection Dao", listdata)
-
-	log.Println("Parameter values ", filterdoc)
 	filtercount, err := collection.CountDocuments(ctx, filterdoc)
 	if err != nil {
-		return nil, err
+		return utils.Map{}, err
 	}
-
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
@@ -124,20 +132,19 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
-		return nil, err
+		return utils.Map{}, err
 	}
 
 	response := utils.Map{
 		db_common.LIST_SUMMARY: utils.Map{
 			db_common.LIST_TOTALSIZE:    totalcount,
 			db_common.LIST_FILTEREDSIZE: filtercount,
-			db_common.LIST_RESULTSIZE:   len(listdata),
+			db_common.LIST_RESULTSIZE:   len(results),
 		},
-		db_common.LIST_RESULT: listdata,
+		db_common.LIST_RESULT: results,
 	}
 
 	return response, nil
-
 }
 
 // ******************************
