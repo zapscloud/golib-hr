@@ -35,6 +35,7 @@ func (p *AttendanceMongoDBDao) InitializeDao(client utils.Map, bussinesId string
 // List - List all Collections
 //
 // *****************************
+
 func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
 
@@ -83,7 +84,7 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	if len(p.staffId) > 0 {
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
-
+	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 	matchStage := bson.M{"$match": filterdoc}
 	stages = append(stages, matchStage)
 

@@ -43,6 +43,7 @@ const (
 	FLD_LEAVETYPE_ID   = "leave_type_id"
 	FLD_LEAVETYPE_NAME = "leave_type_name"
 	FLD_LEAVETYPE_DESC = "leave_type_desc"
+	FLD_LEAVE_INFO     = "leave_info"
 
 	// Department table fields
 	FLD_DEPARTMENT_ID   = "department_id"

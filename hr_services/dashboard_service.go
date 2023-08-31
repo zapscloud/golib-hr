@@ -80,7 +80,6 @@ func NewDashboardService(props utils.Map) (DashboardService, error) {
 		}
 	}
 
-
 	p.child = &p // Assign the pointer to itself
 
 	return &p, err

@@ -71,6 +71,17 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 	stages = append(stages, lookupStage)
 
+	// Lookup Stage for Leave Info
+	lookupLeaveStage := bson.M{
+		"$lookup": bson.M{
+			"from":         hr_common.DbHrLeaveTypes,
+			"localField":   hr_common.FLD_LEAVETYPE_ID,
+			"foreignField": hr_common.FLD_LEAVETYPE_ID,
+			"as":           hr_common.FLD_LEAVE_INFO,
+		},
+	}
+	stages = append(stages, lookupLeaveStage)
+
 	// Match Stage
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
@@ -79,6 +90,7 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	if len(p.staffId) > 0 {
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
+	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 	matchStage := bson.M{"$match": filterdoc}
 	stages = append(stages, matchStage)
 
