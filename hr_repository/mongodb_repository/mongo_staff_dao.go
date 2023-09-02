@@ -56,6 +56,9 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 
+	// Add Lookup stages
+	stages = p.appendListLookups(stages)
+
 	// Match Stage
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
@@ -63,9 +66,6 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 
 	matchStage := bson.M{"$match": filterdoc}
 	stages = append(stages, matchStage)
-
-	// Add Lookup stages
-	stages = p.appendListLookups(stages, filterdoc)
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
@@ -305,7 +305,7 @@ func (p *StaffMongoDBDao) DeleteAll() (int64, error) {
 	log.Printf("accountMongoDao::DeleteAll - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
 }
-func (p *StaffMongoDBDao) appendListLookups(stages []bson.M, filter bson.D) []bson.M {
+func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Token ========================================
 	lookupStage := bson.M{
@@ -335,7 +335,6 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M, filter bson.D) []bs
 			"foreignField": platform_common.FLD_APP_USER_ID,
 			"as":           hr_common.FLD_APP_USER_INFO,
 			"pipeline": []bson.M{
-				//{"$match": filter},
 				// Remove following fields from result-set
 				{"$project": bson.M{
 					db_common.FLD_DEFAULT_ID:              0,
