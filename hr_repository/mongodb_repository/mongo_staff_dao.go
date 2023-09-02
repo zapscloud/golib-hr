@@ -52,11 +52,19 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 	// All Stages
 	stages := []bson.M{}
+	// Remove unwanted fields
+	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
+	stages = append(stages, unsetStage)
+
 	stages = p.appendListLookups(stages)
 	// Match Stage
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+		
+	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+	matchStage := bson.M{"$match": filterdoc}
+	stages = append(stages, matchStage)
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
@@ -92,12 +100,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 
 	//log.Println("End - Find All Collection Dao", results)
 
-	listdata := []utils.Map{}
-	for _, value := range results {
-		//log.Println("Item ", idx)
-		delete(value, db_common.FLD_DEFAULT_ID)
-		listdata = append(listdata, value)
-	}
+
 
 	//log.Println("End - Find All Collection Dao", listdata)
 
@@ -119,9 +122,9 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		db_common.LIST_SUMMARY: utils.Map{
 			db_common.LIST_TOTALSIZE:    totalcount,
 			db_common.LIST_FILTEREDSIZE: filtercount,
-			db_common.LIST_RESULTSIZE:   len(listdata),
+			db_common.LIST_RESULTSIZE:   len(results),
 		},
-		db_common.LIST_RESULT: listdata,
+		db_common.LIST_RESULT: results,
 	}
 
 	return response, nil
@@ -316,10 +319,6 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 				// Remove following fields from result-set
 				{"$project": bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
-					hr_common.FLD_BUSINESS_ID: 0,
-					"total_allocation":        0,
-					"total_issue":             0,
-					"total_redeem":            0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
 					db_common.FLD_UPDATED_AT:  0}},
