@@ -7,6 +7,7 @@ import (
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/mongo_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
+	"github.com/zapscloud/golib-platform/platform_common"
 	"github.com/zapscloud/golib-utils/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,7 +16,7 @@ import (
 // StaffMongoDBDao - Staff DAO Repository
 type StaffMongoDBDao struct {
 	client     utils.Map
-	businessID string
+	businessId string
 }
 
 func init() {
@@ -25,7 +26,7 @@ func init() {
 func (p *StaffMongoDBDao) InitializeDao(client utils.Map, businessId string) {
 	log.Println("Initialize Staff Mongodb DAO")
 	p.client = client
-	p.businessID = businessId
+	p.businessId = businessId
 }
 
 // List - List all Collections
@@ -41,17 +42,21 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 
 	log.Println("Get Collection - Find All Collection Dao", filter, len(filter), sort, len(sort))
 
-	opts := options.Find()
-
 	filterdoc := bson.D{}
 	if len(filter) > 0 {
 		// filters, _ := strconv.Unquote(string(filter))
 		err = bson.UnmarshalExtJSON([]byte(filter), true, &filterdoc)
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
-			log.Println(filterdoc)
 		}
 	}
+	// All Stages
+	stages := []bson.M{}
+	stages = p.appendListLookups(stages)
+	// Match Stage
+	filterdoc = append(filterdoc,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
+		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
@@ -59,26 +64,22 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			opts.SetSort(sortdoc)
+			sortStage := bson.M{"$sort": sortdoc}
+			stages = append(stages, sortStage)
 		}
 	}
 
 	if skip > 0 {
-		log.Println(filterdoc)
-		opts.SetSkip(skip)
+		skipStage := bson.M{"$skip": skip}
+		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		log.Println(filterdoc)
-		opts.SetLimit(limit)
+		limitStage := bson.M{"$limit": limit}
+		stages = append(stages, limitStage)
 	}
 
-	filterdoc = append(filterdoc,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		bson.E{Key: db_common.FLD_IS_DELETED, Value: false},
-	)
-	log.Println("Parameter values ", filterdoc, opts)
-	cursor, err := collection.Find(ctx, filterdoc, opts)
+	cursor, err := collection.Aggregate(ctx, stages)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 
 	basefilterdoc := bson.D{
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
@@ -140,7 +141,7 @@ func (p *StaffMongoDBDao) Get(account_id string) (utils.Map, error) {
 	filter := bson.D{{Key: hr_common.FLD_STAFF_ID, Value: account_id}, {}}
 
 	filter = append(filter,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Get:: Got filter ", filter)
@@ -178,7 +179,7 @@ func (p *StaffMongoDBDao) Find(filter string) (utils.Map, error) {
 		fmt.Println("Error on filter Unmarshal", err)
 	}
 	bfilter = append(bfilter,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	log.Println("Find:: Got filter ", bfilter)
@@ -238,7 +239,7 @@ func (p *StaffMongoDBDao) Update(account_id string, indata utils.Map) (utils.Map
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{{Key: hr_common.FLD_STAFF_ID, Value: account_id}}
-	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
+	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId})
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
 	if err != nil {
@@ -267,7 +268,7 @@ func (p *StaffMongoDBDao) Delete(account_id string) (int64, error) {
 
 	filter := bson.D{{Key: hr_common.FLD_STAFF_ID, Value: account_id}}
 
-	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
+	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId})
 
 	res, err := collection.DeleteOne(ctx, filter, opts)
 	if err != nil {
@@ -292,7 +293,7 @@ func (p *StaffMongoDBDao) DeleteAll() (int64, error) {
 		CaseLevel: false,
 	})
 
-	filter := bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}
+	filter := bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}
 
 	res, err := collection.DeleteMany(ctx, filter, opts)
 	if err != nil {
@@ -301,4 +302,56 @@ func (p *StaffMongoDBDao) DeleteAll() (int64, error) {
 	}
 	log.Printf("accountMongoDao::DeleteAll - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
+}
+func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
+
+	// Lookup Stage for Token ========================================
+	lookupStage := bson.M{
+		"$lookup": bson.M{
+			"from":         platform_common.DbPlatformBusinessUser,
+			"localField":   hr_common.FLD_STAFF_ID,
+			"foreignField": platform_common.FLD_APP_USER_ID,
+			"as":           hr_common.FLD_BUSINESS_USER_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID:  0,
+					hr_common.FLD_BUSINESS_ID: 0,
+					"total_allocation":        0,
+					"total_issue":             0,
+					"total_redeem":            0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					db_common.FLD_UPDATED_AT:  0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	// Lookup Stage for User ==========================================
+	lookupStage = bson.M{
+		"$lookup": bson.M{
+			"from":         platform_common.DbPlatformAppUsers,
+			"localField":   hr_common.FLD_STAFF_ID,
+			"foreignField": platform_common.FLD_APP_USER_ID,
+			"as":           hr_common.FLD_APP_USER_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID:              0,
+					platform_common.FLD_APP_USER_ID:       0,
+					"auth_key":                            0,
+					platform_common.FLD_APP_USER_PASSWORD: 0,
+					db_common.FLD_IS_DELETED:              0,
+					db_common.FLD_CREATED_AT:              0,
+					db_common.FLD_UPDATED_AT:              0}},
+			},
+		},
+	}
+
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	return stages
 }

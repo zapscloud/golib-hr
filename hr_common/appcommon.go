@@ -24,6 +24,11 @@ const (
 	DbHrLeaveTypes    = DbPrefix + "hr_leave_types"
 )
 
+const (
+	FLD_BUSINESS_USER_INFO = "business_user_info"
+	FLD_APP_USER_INFO      = "app_user_info"
+)
+
 // HR Module table fields
 const (
 	// Common fields for all tables
