@@ -56,15 +56,16 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 
-	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
-	matchStage := bson.M{"$match": filterdoc}
-	stages = append(stages, matchStage)
-
-	stages = p.appendListLookups(stages, filterdoc)
 	// Match Stage
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+
+	matchStage := bson.M{"$match": filterdoc}
+	stages = append(stages, matchStage)
+
+	// Add Lookup stages
+	stages = p.appendListLookups(stages, filterdoc)
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
@@ -98,10 +99,6 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		return nil, err
 	}
 
-	//log.Println("End - Find All Collection Dao", results)
-
-	//log.Println("End - Find All Collection Dao", listdata)
-
 	log.Println("Parameter values ", filterdoc)
 	filtercount, err := collection.CountDocuments(ctx, filterdoc)
 	if err != nil {
@@ -114,6 +111,10 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return nil, err
+	}
+
+	if results == nil {
+		results = []utils.Map{}
 	}
 
 	response := utils.Map{
@@ -334,7 +335,7 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M, filter bson.D) []bs
 			"foreignField": platform_common.FLD_APP_USER_ID,
 			"as":           hr_common.FLD_APP_USER_INFO,
 			"pipeline": []bson.M{
-				{"$match": filter},
+				//{"$match": filter},
 				// Remove following fields from result-set
 				{"$project": bson.M{
 					db_common.FLD_DEFAULT_ID:              0,
