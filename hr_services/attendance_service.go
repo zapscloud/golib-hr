@@ -25,6 +25,7 @@ type AttendanceService interface {
 	Get(attendance_id string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
+	CreateMany(indata utils.Map) (utils.Map, error)
 	Update(attendance_id string, indata utils.Map) (utils.Map, error)
 	Delete(attendance_id string, delete_permanent bool) error
 
@@ -165,20 +166,58 @@ func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
 		log.Println("Unique Attendance ID", attendanceId)
 	}
 
-	// Check staffId received in indata
-	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
-
-	if utils.IsEmpty(p.staffId) && utils.IsEmpty(staffId) {
+	if utils.IsEmpty(p.staffId) {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "No StaffId", ErrorDetail: "No StaffId passed"}
 		return indata, err
 	}
 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
-	if !utils.IsEmpty(p.staffId) {
-		indata[hr_common.FLD_STAFF_ID] = p.staffId
-	}
+	indata[hr_common.FLD_STAFF_ID] = p.staffId
 	indata[hr_common.FLD_DATETIME] = time.Now().UTC() //.Format("2006-01-02 15:04:05")
 	log.Println("Provided Attendance ID:", attendanceId)
+
+	_, err := p.daoAttendance.Get(attendanceId)
+	if err == nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Attendance ID !", ErrorDetail: "Given Attendance ID already exist"}
+		return indata, err
+	}
+
+	insertResult, err := p.daoAttendance.Create(indata)
+	if err != nil {
+		return indata, err
+	}
+	log.Println("AttendanceService::Create - End ", insertResult)
+	return indata, err
+}
+
+// ************************
+// CreateMany - CreateMany Service
+//
+// ************************
+func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) {
+
+	log.Println("AttendanceService::Create - Begin")
+	var attendanceId string
+
+	dataval, dataok := indata[hr_common.FLD_ATTENDANCE_ID]
+	if dataok {
+		attendanceId = strings.ToLower(dataval.(string))
+	} else {
+		attendanceId = utils.GenerateUniqueId("atten")
+		log.Println("Unique Attendance ID", attendanceId)
+	}
+
+	// Check staffId received in indata
+	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
+	if utils.IsEmpty(staffId) {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "No StaffId", ErrorDetail: "No StaffId passed"}
+		return indata, err
+	}
+	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
+	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
+	
+	// TODO: Need to check the date_time and convert it to UTC format
+	
 
 	_, err := p.daoAttendance.Get(attendanceId)
 	if err == nil {
