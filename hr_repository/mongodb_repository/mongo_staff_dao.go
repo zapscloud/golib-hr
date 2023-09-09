@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/zapscloud/golib-business/business_common"
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/mongo_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
@@ -104,7 +105,6 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 
 	log.Println("Parameter values ", filterdoc)
-	
 
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
@@ -311,9 +311,9 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 	// Lookup Stage for Token ========================================
 	lookupStage := bson.M{
 		"$lookup": bson.M{
-			"from":         platform_common.DbPlatformBusinessUser,
+			"from":         business_common.DbBusinessUsers,
 			"localField":   hr_common.FLD_STAFF_ID,
-			"foreignField": platform_common.FLD_APP_USER_ID,
+			"foreignField": business_common.FLD_USER_ID,
 			"as":           hr_common.FLD_BUSINESS_USER_INFO,
 			"pipeline": []bson.M{
 				// Remove following fields from result-set
