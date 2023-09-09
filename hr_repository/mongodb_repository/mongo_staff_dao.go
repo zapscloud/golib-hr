@@ -88,6 +88,10 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		stages = append(stages, limitStage)
 	}
 
+	filtercount, err := collection.CountDocuments(ctx, filterdoc)
+	if err != nil {
+		return nil, err
+	}
 	cursor, err := collection.Aggregate(ctx, stages)
 	if err != nil {
 		return nil, err
@@ -100,10 +104,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 
 	log.Println("Parameter values ", filterdoc)
-	filtercount, err := collection.CountDocuments(ctx, filterdoc)
-	if err != nil {
-		return nil, err
-	}
+	
 
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},

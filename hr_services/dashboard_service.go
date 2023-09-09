@@ -25,10 +25,10 @@ type dashboardBaseService struct {
 	db_utils.DatabaseService
 	daoDashboard hr_repository.DashboardDao
 	daoBusiness  platform_repository.BusinessDao
-	daoStaff     hr_repository.StaffDao
-	child        DashboardService
-	businessID   string
-	staffID      string // Changed "staffId" to "staffID" for consistency
+	//daoStaff     hr_repository.StaffDao
+	child      DashboardService
+	businessID string
+	staffID    string // Changed "staffId" to "staffID" for consistency
 }
 
 func init() {
@@ -63,7 +63,7 @@ func NewDashboardService(props utils.Map) (DashboardService, error) {
 	// Instantiate other services
 	p.daoDashboard = hr_repository.NewDashboardDao(p.GetClient(), p.businessID, p.staffID)
 	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
-	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessID)
+	//p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessID)
 
 	_, err = p.daoBusiness.Get(businessID)
 	if err != nil {
@@ -71,14 +71,14 @@ func NewDashboardService(props utils.Map) (DashboardService, error) {
 		return p.errorReturn(err)
 	}
 
-	// Verify the Staff Exist
-	if len(staffID) > 0 {
-		_, err = p.daoStaff.Get(staffID)
-		if err != nil {
-			err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
-			return p.errorReturn(err)
-		}
-	}
+	// // Verify the Staff Exist
+	// if len(staffID) > 0 {
+	// 	_, err = p.daoStaff.Get(staffID)
+	// 	if err != nil {
+	// 		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
+	// 		return p.errorReturn(err)
+	// 	}
+	// }
 
 	p.child = &p // Assign the pointer to itself
 
