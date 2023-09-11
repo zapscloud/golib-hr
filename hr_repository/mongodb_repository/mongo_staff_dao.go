@@ -306,6 +306,7 @@ func (p *StaffMongoDBDao) DeleteAll() (int64, error) {
 	log.Printf("accountMongoDao::DeleteAll - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
 }
+
 func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Token ========================================
@@ -348,7 +349,28 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 			},
 		},
 	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
 
+	// Lookup Stage for Token ========================================
+	lookupStage = bson.M{
+		"$lookup": bson.M{
+			"from":         business_common.DbBusinessRoles,
+			"localField":   hr_common.FLD_BUSINESS_USER_INFO + "." + business_common.FLD_USER_ROLES + "." + business_common.FLD_ROLE_ID,
+			"foreignField": business_common.FLD_ROLE_ID,
+			"as":           hr_common.FLD_ROLE_INFO,
+			"pipeline": []bson.M{
+				{"$match": bson.M{business_common.FLD_BUSINESS_ID: p.businessId}},
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID:        0,
+					db_common.FLD_IS_DELETED:        0,
+					db_common.FLD_CREATED_AT:        0,
+					db_common.FLD_UPDATED_AT:        0,
+					business_common.FLD_BUSINESS_ID: 0}},
+			},
+		},
+	}
 	// Add it to Aggregate Stage
 	stages = append(stages, lookupStage)
 

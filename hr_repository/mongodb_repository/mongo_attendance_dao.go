@@ -64,18 +64,8 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	// Remove unwanted fields
 	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
-
-	// Lookup Stage
-	lookupStage := bson.M{
-		"$lookup": bson.M{
-			"from":         platform_common.DbPlatformAppUsers,
-			"localField":   hr_common.FLD_STAFF_ID,
-			"foreignField": platform_common.FLD_APP_USER_ID,
-			"as":           hr_common.FLD_STAF_INFO,
-		},
-	}
-	stages = append(stages, lookupStage)
-
+	// Add Lookup stages
+	stages = p.appendListLookups(stages)
 	// Match Stage
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
@@ -332,4 +322,70 @@ func (p *AttendanceMongoDBDao) Delete(attendanceId string) (int64, error) {
 	}
 	log.Printf("attendanceMongoDao::Delete - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
+}
+func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
+
+	// Lookup Stage for Token ========================================
+	// Lookup Stage
+	lookupStage := bson.M{
+		"$lookup": bson.M{
+			"from":         platform_common.DbPlatformAppUsers,
+			"localField":   hr_common.FLD_STAFF_ID,
+			"foreignField": platform_common.FLD_APP_USER_ID,
+			"as":           hr_common.FLD_STAF_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID: 0,
+					db_common.FLD_IS_DELETED: 0,
+					db_common.FLD_CREATED_AT: 0,
+					db_common.FLD_UPDATED_AT: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	// Lookup Stage for User ==========================================
+	lookupStage = bson.M{
+		"$lookup": bson.M{
+			"from":         hr_common.DbHrShifts,
+			"localField":   hr_common.FLD_TYPE_OF_WORK,
+			"foreignField": hr_common.FLD_SHIFT_ID,
+			"as":           hr_common.FLD_SHIFT_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID:              0,
+					platform_common.FLD_APP_USER_PASSWORD: 0,
+					db_common.FLD_IS_DELETED:              0,
+					db_common.FLD_CREATED_AT:              0,
+					db_common.FLD_UPDATED_AT:              0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	// Lookup Stage for Token ========================================
+	lookupStage = bson.M{
+		"$lookup": bson.M{
+			"from":         hr_common.DbHrWorkLocations,
+			"localField":   hr_common.FLD_WORKLOCATION,
+			"foreignField": hr_common.FLD_WORKLOCATION_ID,
+			"as":           hr_common.FLD_WORKLOCATION_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID: 0,
+					db_common.FLD_IS_DELETED: 0,
+					db_common.FLD_CREATED_AT: 0,
+					db_common.FLD_UPDATED_AT: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	return stages
 }

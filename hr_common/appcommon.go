@@ -27,6 +27,9 @@ const (
 const (
 	FLD_BUSINESS_USER_INFO = "business_user_info"
 	FLD_APP_USER_INFO      = "app_user_info"
+	FLD_ROLE_INFO          = "role_info"
+	FLD_SHIFT_INFO         = "shift_info"
+	FLD_WORKLOCATION_INFO  = "worklocation_info"
 )
 
 // HR Module table fields
@@ -89,11 +92,13 @@ const (
 	FLD_SHIFT_FROM        = "shift_from"
 	FLD_SHIFT_TO          = "shift_to"
 	FLD_SHIFT_DESCRIPTION = "shift_description"
+	FLD_TYPE_OF_WORK      = "type_of_work"
 
 	// Work Location Table
 	FLD_WORKLOCATION_ID          = "work_location_id"
 	FLD_WORKLOCATION_NAME        = "work_location_name"
 	FLD_WORKLOCATION_DESCRIPTION = "work_location_description"
+	FLD_WORKLOCATION             = "work_location"
 )
 
 func init() {
