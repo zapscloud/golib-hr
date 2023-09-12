@@ -215,9 +215,12 @@ func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) 
 	}
 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
-	
-	// TODO: Need to check the date_time and convert it to UTC format
-	
+
+	// Convert Date_time string to Date Format
+	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
+		layout := "01/02/2006 3:04:05 PM"
+		indata[hr_common.FLD_DATETIME], _ = time.Parse(layout, dataVal.(string))
+	}
 
 	_, err := p.daoAttendance.Get(attendanceId)
 	if err == nil {
