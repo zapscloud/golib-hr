@@ -72,7 +72,7 @@ func main() {
 	// FindAttendance(rolesrv)
 	//}
 	date_time := "2023-09-12 09:00:00 AM"
-	layout := "2006-02-01 03:04:05 PM"
+	layout := "2006-01-02 03:04:05 PM"
 	dateResult, err := time.Parse(layout, date_time)
 	log.Println("DateTime ", dateResult, err)
 
