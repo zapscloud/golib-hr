@@ -218,7 +218,7 @@ func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) 
 
 	// Convert Date_time string to Date Format
 	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
-		layout := "01/02/2006 3:04:05 PM"
+		layout := "2006-02-01 03:04:05 PM"
 		indata[hr_common.FLD_DATETIME], _ = time.Parse(layout, dataVal.(string))
 	}
 
