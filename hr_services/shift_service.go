@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -107,7 +106,7 @@ func (p *shiftBaseService) Get(shiftId string) (utils.Map, error) {
 }
 
 func (p *shiftBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("AccountService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoShift.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)

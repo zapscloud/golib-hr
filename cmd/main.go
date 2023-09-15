@@ -34,20 +34,20 @@ func MdbMain(businessid string) hr_services.AttendanceService {
 
 	dbCreds := GetDBCreds()
 
-	fmt.Println("DB Credentials: ", dbCreds)
+	log.Println("DB Credentials: ", dbCreds)
 
 	if dbCreds[db_common.DB_SERVER].(string) == "" {
-		fmt.Println("Environment variable MONGO_DB_SERVER should be defined")
+		log.Println("Environment variable MONGO_DB_SERVER should be defined")
 		return nil
 	} else if dbCreds[db_common.DB_NAME].(string) == "" {
-		fmt.Println("Environment variable MONGO_DB_NAME should be defined")
+		log.Println("Environment variable MONGO_DB_NAME should be defined")
 		return nil
 	}
 
 	dbCreds[hr_common.FLD_BUSINESS_ID] = businessid
 
 	rolesrv, err := hr_services.NewAttendanceService(dbCreds)
-	fmt.Println("User Mongo Service Error ", err)
+	log.Println("User Mongo Service Error ", err)
 	return rolesrv
 }
 
@@ -79,7 +79,7 @@ func main() {
 }
 
 func EmptyBusinessAttendance(srv hr_services.AttendanceService) {
-	fmt.Println("Attendance Service ")
+	log.Println("Attendance Service ")
 }
 
 func CreateAttendance(srv hr_services.AttendanceService) {
@@ -91,14 +91,14 @@ func CreateAttendance(srv hr_services.AttendanceService) {
 	}
 
 	res, err := srv.Create(indata)
-	fmt.Println("Create Attendance", err)
+	log.Println("Create Attendance", err)
 	pretty.Println(res)
 
 }
 
 func GetAttendance(srv hr_services.AttendanceService) {
 	res, err := srv.Get("role001")
-	fmt.Println("Get Attendance", err)
+	log.Println("Get Attendance", err)
 	pretty.Println(res)
 
 }
@@ -107,7 +107,7 @@ func FindAttendance(srv hr_services.AttendanceService) {
 
 	filter := fmt.Sprintf(`{"%s":"%s"}`, "role_scope", "admin")
 	res, err := srv.Find(filter)
-	fmt.Println("Get Attendance", err)
+	log.Println("Get Attendance", err)
 	pretty.Println(res)
 
 }
@@ -121,7 +121,7 @@ func UpdateAttendance(srv hr_services.AttendanceService) {
 	}
 
 	res, err := srv.Update("role001", indata)
-	fmt.Println("Update Attendance", err)
+	log.Println("Update Attendance", err)
 	pretty.Println(res)
 
 }
@@ -130,8 +130,8 @@ func DeleteAttendance(srv hr_services.AttendanceService) {
 
 	srv.BeginTransaction()
 	err := srv.Delete("role001", false)
-	fmt.Println("DeleteAttendance success ", err)
-	fmt.Println("DeleteAttendance Value ")
+	log.Println("DeleteAttendance success ", err)
+	log.Println("DeleteAttendance Value ")
 
 	if err != nil {
 		srv.RollbackTransaction()
@@ -147,7 +147,7 @@ func ListAttendances(srv hr_services.AttendanceService) {
 	sort := `{ "role_scope":1, "role_id":1}`
 
 	res, err := srv.List(filter, sort, 0, 0)
-	fmt.Println("List User success ", err)
-	fmt.Println("List User summary ", res)
+	log.Println("List User success ", err)
+	log.Println("List User summary ", res)
 	pretty.Print(res)
 }

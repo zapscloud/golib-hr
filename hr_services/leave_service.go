@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -124,7 +123,7 @@ func (p *leaveBaseService) Get(leaveId string) (utils.Map, error) {
 }
 
 func (p *leaveBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("AccountService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoLeave.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)

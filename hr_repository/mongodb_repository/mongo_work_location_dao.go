@@ -1,7 +1,6 @@
 package mongodb_repository
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/zapscloud/golib-dbutils/db_common"
@@ -174,7 +173,7 @@ func (p *WorkLocationMongoDBDao) Find(filter string) (utils.Map, error) {
 	bfilter := bson.D{}
 	err = bson.UnmarshalExtJSON([]byte(filter), true, &bfilter)
 	if err != nil {
-		fmt.Println("Error on filter Unmarshal", err)
+		log.Println("Error on filter Unmarshal", err)
 	}
 	bfilter = append(bfilter,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},

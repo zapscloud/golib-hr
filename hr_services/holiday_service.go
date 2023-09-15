@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -106,7 +105,7 @@ func (p *holidayBaseService) Get(holiday_id string) (utils.Map, error) {
 }
 
 func (p *holidayBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("AccountService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoHoliday.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)

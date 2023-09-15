@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/zapscloud/golib-dbutils/db_common"
@@ -105,7 +104,7 @@ func (p *staffTypeBaseService) Get(staffTypeId string) (utils.Map, error) {
 }
 
 func (p *staffTypeBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("AccountService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoStaffType.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)

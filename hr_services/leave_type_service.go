@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -34,9 +33,9 @@ type LeaveTypeService interface {
 type LeaveTypeBaseService struct {
 	db_utils.DatabaseService
 	daoLeaveType hr_repository.LeaveTypeDao
-	daoBusiness   platform_repository.BusinessDao
-	child         LeaveTypeService
-	businessID    string
+	daoBusiness  platform_repository.BusinessDao
+	child        LeaveTypeService
+	businessID   string
 }
 
 func init() {
@@ -119,7 +118,7 @@ func (p *LeaveTypeBaseService) Get(LeaveType_id string) (utils.Map, error) {
 }
 
 func (p *LeaveTypeBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("LeaveTypeService::FindByCode::  Begin ", filter)
+	log.Println("LeaveTypeService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoLeaveType.Find(filter)
 	log.Println("LeaveTypeService::FindByCode:: End ", data, err)

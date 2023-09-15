@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -106,7 +105,7 @@ func (p *positionBaseService) Get(position_id string) (utils.Map, error) {
 }
 
 func (p *positionBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("AccountService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoPosition.Find(filter)
 	log.Println("AccountService::FindByCode:: End ", data, err)

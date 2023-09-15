@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -117,7 +116,7 @@ func (p *designationBaseService) Get(designation_id string) (utils.Map, error) {
 //
 // ************************
 func (p *designationBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("DesignationService::FindByCode::  Begin ", filter)
+	log.Println("DesignationService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoDesignation.Find(filter)
 	log.Println("DesignationService::FindByCode:: End ", data, err)

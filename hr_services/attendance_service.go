@@ -1,7 +1,6 @@
 package hr_services
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -62,7 +61,6 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Attendance DB Opened")
 
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
@@ -105,8 +103,6 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 }
 
 func (p *attendanceBaseService) EndService() {
-	fmt.Println("Attendance DB Closed Normally")
-
 	p.CloseDatabaseService()
 }
 
@@ -145,7 +141,7 @@ func (p *attendanceBaseService) Get(appattendance_id string) (utils.Map, error) 
 //
 // ************************
 func (p *attendanceBaseService) Find(filter string) (utils.Map, error) {
-	fmt.Println("AttendanceService::FindByCode::  Begin ", filter)
+	log.Println("AttendanceService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoAttendance.Find(filter)
 	log.Println("AttendanceService::FindByCode:: End ", data, err)
@@ -292,8 +288,6 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 }
 
 func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error) {
-	fmt.Println("Attendance DB Closed when error")
-
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err
