@@ -62,6 +62,7 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Attendance DB Opened")
 
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
@@ -104,6 +105,8 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 }
 
 func (p *attendanceBaseService) EndService() {
+	fmt.Println("Attendance DB Closed Normally")
+
 	p.CloseDatabaseService()
 }
 
@@ -289,6 +292,8 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 }
 
 func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error) {
+	fmt.Println("Attendance DB Closed when error")
+
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err
