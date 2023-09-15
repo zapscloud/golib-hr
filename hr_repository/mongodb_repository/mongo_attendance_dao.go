@@ -60,22 +60,29 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	// All Stages
 	stages := []bson.M{}
 
-	// Remove unwanted fields
+	// Remove unwanted fields =======================
 	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
-	// Add Lookup stages
-	stages = p.appendListLookups(stages)
-	// Match Stage
+	// ==============================================
+
+	// Match Stage ==================================
 	filterdoc = append(filterdoc,
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+
 	// Append StaffId in filter if available
 	if len(p.staffId) > 0 {
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
 	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+
 	matchStage := bson.M{"$match": filterdoc}
 	stages = append(stages, matchStage)
+	// ==================================================
+
+	// Add Lookup stages ================================
+	stages = p.appendListLookups(stages)
+	// ==================================================
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
@@ -335,10 +342,11 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 			"pipeline": []bson.M{
 				// Remove following fields from result-set
 				{"$project": bson.M{
-					db_common.FLD_DEFAULT_ID: 0,
-					db_common.FLD_IS_DELETED: 0,
-					db_common.FLD_CREATED_AT: 0,
-					db_common.FLD_UPDATED_AT: 0}},
+					db_common.FLD_DEFAULT_ID:              0,
+					db_common.FLD_IS_DELETED:              0,
+					db_common.FLD_CREATED_AT:              0,
+					db_common.FLD_UPDATED_AT:              0,
+					platform_common.FLD_APP_USER_PASSWORD: 0}},
 			},
 		},
 	}
