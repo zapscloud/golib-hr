@@ -105,8 +105,8 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 	stages = append(stages, projectStage)
 	// ==================================================
 
-	// Lookup Stage
-	lookupStage := bson.M{
+	// Lookup Stage for staff-info =========================
+	lookupStage1 := bson.M{
 		"$lookup": bson.M{
 			"from":         platform_common.DbPlatformAppUsers,
 			"localField":   "_id." + hr_common.FLD_STAFF_ID,
@@ -124,7 +124,52 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 		},
 	}
 	// Add it to Aggregate Stage
-	stages = append(stages, lookupStage)
+	stages = append(stages, lookupStage1)
+	// ==========================================================
+
+	// Lookup Stage for shift =========================
+	lookupStage2 := bson.M{
+		"$lookup": bson.M{
+			"from":         hr_common.DbHrShifts,
+			"localField":   "docs.type_of_work",
+			"foreignField": hr_common.FLD_SHIFT_ID,
+			"as":           hr_common.FLD_SHIFT_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					db_common.FLD_UPDATED_AT:  0,
+					hr_common.FLD_BUSINESS_ID: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage2)
+	// ==========================================================
+
+	// Lookup Stage for Work Location =========================
+	lookupStage3 := bson.M{
+		"$lookup": bson.M{
+			"from":         hr_common.DbHrWorkLocations,
+			"localField":   "docs.work_location",
+			"foreignField": hr_common.FLD_WORKLOCATION_ID,
+			"as":           hr_common.FLD_WORKLOCATION_INFO,
+			"pipeline": []bson.M{
+				// Remove following fields from result-set
+				{"$project": bson.M{
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					db_common.FLD_UPDATED_AT:  0,
+					hr_common.FLD_BUSINESS_ID: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage3)
+	// ==========================================================
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
