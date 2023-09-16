@@ -25,6 +25,28 @@ const (
 )
 
 const (
+	MONGODB_MATCH        = "$match"
+	MONGODB_LOOKUP       = "$lookup"
+	MONGODB_GROUP        = "$group"
+	MONGODB_PROJECT      = "$project"
+	MONGODB_UNSET        = "$unset"
+	MONGODB_SORT         = "$sort"
+	MONGODB_SKIP         = "$skip"
+	MONGODB_LIMIT        = "$limit"
+	MONGODB_PUSH         = "$push"
+	MONGODB_DATETOSTRING = "$dateToString"
+	MONGODB_SET          = "$set"
+	MONGODB_SUM          = "$sum"
+
+	MONGODB_STR_FROM         = "from"
+	MONGODB_STR_LOCALFIELD   = "localField"
+	MONGODB_STR_FOREIGNFIELD = "foreignField"
+	MONGODB_STR_AS           = "as"
+	MONGODB_STR_PIPELINE     = "pipeline"
+	MONGODB_STR_FORMAT       = "format"
+)
+
+const (
 	FLD_BUSINESS_USER_INFO = "business_user_info"
 	FLD_APP_USER_INFO      = "app_user_info"
 	FLD_ROLE_INFO          = "role_info"

@@ -253,7 +253,7 @@ func (p *DesignationMongoDBDao) Update(designation_id string, indata utils.Map) 
 	filter := bson.D{{Key: hr_common.FLD_DESIGNATION_ID, Value: designation_id}}
 	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}

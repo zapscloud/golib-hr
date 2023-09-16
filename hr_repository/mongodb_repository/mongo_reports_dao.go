@@ -56,7 +56,7 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 	stages := []bson.M{}
 
 	// Remove unwanted fields =======================
-	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
+	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 	// =============================================
 
@@ -69,20 +69,21 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 	if len(p.staffId) > 0 {
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
-	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
-	matchStage := bson.M{"$match": filterdoc}
+	matchStage := bson.M{hr_common.MONGODB_MATCH: filterdoc}
 	stages = append(stages, matchStage)
 	// ==================================================
 
 	// Add Group stage ================================
 	groupbyStage := bson.M{
-		"$group": bson.M{
-			"_id": bson.M{
-				"staff_id": "$staff_id",
-				"for_date": bson.M{"$dateToString": bson.M{"format": "%Y-%m-%d", "date": "$date_time"}},
+		hr_common.MONGODB_GROUP: bson.M{
+			db_common.FLD_DEFAULT_ID: bson.M{
+				hr_common.FLD_STAFF_ID: "$" + hr_common.FLD_STAFF_ID,
+				"for_date": bson.M{
+					hr_common.MONGODB_DATETOSTRING: bson.M{
+						hr_common.MONGODB_STR_FORMAT: "%Y-%m-%d", "date": "$" + hr_common.FLD_DATETIME}},
 			},
-			"docs": bson.M{"$push": "$$ROOT"},
+			"docs": bson.M{hr_common.MONGODB_PUSH: "$$ROOT"},
 		},
 	}
 	// Add it to Aggregate Stage
@@ -91,14 +92,13 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 
 	// Project Stage =====================================
 	projectStage := bson.M{
-		"$project": bson.M{
-			"docs." + db_common.FLD_CREATED_AT:    0,
-			"docs." + db_common.FLD_UPDATED_AT:    0,
-			"docs." + db_common.FLD_IS_DELETED:    0,
-			"docs." + hr_common.FLD_ATTENDANCE_ID: 0,
-			"docs." + hr_common.FLD_BUSINESS_ID:   0,
-			"docs." + hr_common.FLD_LATITUDE:      0,
-			"docs." + hr_common.FLD_LONGITUDE:     0,
+		hr_common.MONGODB_PROJECT: bson.M{
+			"docs." + db_common.FLD_CREATED_AT:  0,
+			"docs." + db_common.FLD_UPDATED_AT:  0,
+			"docs." + db_common.FLD_IS_DELETED:  0,
+			"docs." + hr_common.FLD_BUSINESS_ID: 0,
+			"docs." + hr_common.FLD_LATITUDE:    0,
+			"docs." + hr_common.FLD_LONGITUDE:   0,
 		},
 	}
 	// Add it to Aggregate Stage
@@ -107,14 +107,14 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 
 	// Lookup Stage for staff-info =========================
 	lookupStage1 := bson.M{
-		"$lookup": bson.M{
-			"from":         platform_common.DbPlatformAppUsers,
-			"localField":   "_id." + hr_common.FLD_STAFF_ID,
-			"foreignField": platform_common.FLD_APP_USER_ID,
-			"as":           hr_common.FLD_STAF_INFO,
-			"pipeline": []bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+			hr_common.MONGODB_STR_LOCALFIELD:   "_id." + hr_common.FLD_STAFF_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAF_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{"$project": bson.M{
+				{hr_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:              0,
 					db_common.FLD_IS_DELETED:              0,
 					db_common.FLD_CREATED_AT:              0,
@@ -129,14 +129,14 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 
 	// Lookup Stage for shift =========================
 	lookupStage2 := bson.M{
-		"$lookup": bson.M{
-			"from":         hr_common.DbHrShifts,
-			"localField":   "docs.type_of_work",
-			"foreignField": hr_common.FLD_SHIFT_ID,
-			"as":           hr_common.FLD_SHIFT_INFO,
-			"pipeline": []bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
+			hr_common.MONGODB_STR_LOCALFIELD:   "docs.type_of_work",
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{"$project": bson.M{
+				{hr_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
@@ -151,14 +151,14 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 
 	// Lookup Stage for Work Location =========================
 	lookupStage3 := bson.M{
-		"$lookup": bson.M{
-			"from":         hr_common.DbHrWorkLocations,
-			"localField":   "docs.work_location",
-			"foreignField": hr_common.FLD_WORKLOCATION_ID,
-			"as":           hr_common.FLD_WORKLOCATION_INFO,
-			"pipeline": []bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrWorkLocations,
+			hr_common.MONGODB_STR_LOCALFIELD:   "docs.work_location",
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_WORKLOCATION_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_WORKLOCATION_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{"$project": bson.M{
+				{hr_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
@@ -177,18 +177,18 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			sortStage := bson.M{"$sort": sortdoc}
+			sortStage := bson.M{hr_common.MONGODB_SORT: sortdoc}
 			stages = append(stages, sortStage)
 		}
 	}
 
 	if skip > 0 {
-		skipStage := bson.M{"$skip": skip}
+		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		limitStage := bson.M{"$limit": limit}
+		limitStage := bson.M{hr_common.MONGODB_LIMIT: limit}
 		stages = append(stages, limitStage)
 	}
 

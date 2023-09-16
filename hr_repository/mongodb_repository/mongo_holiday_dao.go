@@ -239,7 +239,7 @@ func (p *HolidayMongoDBDao) Update(account_id string, indata utils.Map) (utils.M
 		{Key: hr_common.FLD_HOLIDAY_ID, Value: account_id},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}

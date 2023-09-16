@@ -46,8 +46,8 @@ func (p *DashboardMongoDBDao) GetDashboardData() (utils.Map, error) {
 	// 2. Count different leave types
 	//leaveCounts := make(map[string]int64)
 	retData := utils.Map{
-		"All_Staff_leave_details":leaveDataAllStaff,
-		"leave_details": leaveData,
+		"All_Staff_leave_details": leaveDataAllStaff,
+		"leave_details":           leaveData,
 		"staff_details": utils.Map{
 			"total_staff": staffCount,
 		},
@@ -77,7 +77,6 @@ func (p *DashboardMongoDBDao) GetDashboardData() (utils.Map, error) {
 	return retData, nil
 }
 
-
 func (p *DashboardMongoDBDao) getLeaveDetails() (utils.Map, error) {
 	/// Get the MongoDB collection
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
@@ -88,16 +87,16 @@ func (p *DashboardMongoDBDao) getLeaveDetails() (utils.Map, error) {
 	// Define aggregation stages
 	stages := []bson.M{
 		{
-			"$match": bson.M{
+			hr_common.MONGODB_MATCH: bson.M{
 				hr_common.FLD_BUSINESS_ID: p.businessId,
 				hr_common.FLD_STAFF_ID:    p.staffId,
 				db_common.FLD_IS_DELETED:  false,
 			},
 		},
 		{
-			"$group": bson.M{
+			hr_common.MONGODB_GROUP: bson.M{
 				"_id":         "$" + hr_common.FLD_LEAVETYPE_ID,
-				"leave_count": bson.M{"$sum": 1}, // Summing up leave occurrences
+				"leave_count": bson.M{hr_common.MONGODB_SUM: 1}, // Summing up leave occurrences
 			},
 		},
 	}
@@ -134,16 +133,16 @@ func (p *DashboardMongoDBDao) getLeaveDetailsAllStaff() (utils.Map, error) {
 	// Define aggregation stages
 	stages := []bson.M{
 		{
-			"$match": bson.M{
+			hr_common.MONGODB_MATCH: bson.M{
 				hr_common.FLD_BUSINESS_ID: p.businessId,
 				//hr_common.FLD_STAFF_ID:    p.staffId,
-				db_common.FLD_IS_DELETED:  false,
+				db_common.FLD_IS_DELETED: false,
 			},
 		},
 		{
-			"$group": bson.M{
+			hr_common.MONGODB_GROUP: bson.M{
 				"_id":         "$" + hr_common.FLD_LEAVETYPE_ID,
-				"leave_count": bson.M{"$sum": 1}, // Summing up leave occurrences
+				"leave_count": bson.M{hr_common.MONGODB_SUM: 1}, // Summing up leave occurrences
 			},
 		},
 	}

@@ -61,7 +61,7 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	stages := []bson.M{}
 
 	// Remove unwanted fields =======================
-	unsetStage := bson.M{"$unset": db_common.FLD_DEFAULT_ID}
+	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 	// ==============================================
 
@@ -74,9 +74,8 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	if len(p.staffId) > 0 {
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
-	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
-	matchStage := bson.M{"$match": filterdoc}
+	matchStage := bson.M{hr_common.MONGODB_MATCH: filterdoc}
 	stages = append(stages, matchStage)
 	// ==================================================
 
@@ -90,18 +89,18 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			sortStage := bson.M{"$sort": sortdoc}
+			sortStage := bson.M{hr_common.MONGODB_SORT: sortdoc}
 			stages = append(stages, sortStage)
 		}
 	}
 
 	if skip > 0 {
-		skipStage := bson.M{"$skip": skip}
+		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		limitStage := bson.M{"$limit": limit}
+		limitStage := bson.M{hr_common.MONGODB_LIMIT: limit}
 		stages = append(stages, limitStage)
 	}
 
@@ -284,7 +283,7 @@ func (p *AttendanceMongoDBDao) Update(attendanceId string, indata utils.Map) (ut
 		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: "$set", Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -334,14 +333,14 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 	// Lookup Stage for Token ========================================
 	// Lookup Stage
 	lookupStage := bson.M{
-		"$lookup": bson.M{
-			"from":         platform_common.DbPlatformAppUsers,
-			"localField":   hr_common.FLD_STAFF_ID,
-			"foreignField": platform_common.FLD_APP_USER_ID,
-			"as":           hr_common.FLD_STAF_INFO,
-			"pipeline": []bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAF_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{"$project": bson.M{
+				{hr_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:              0,
 					db_common.FLD_IS_DELETED:              0,
 					db_common.FLD_CREATED_AT:              0,
@@ -355,14 +354,14 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for User ==========================================
 	lookupStage = bson.M{
-		"$lookup": bson.M{
-			"from":         hr_common.DbHrShifts,
-			"localField":   hr_common.FLD_TYPE_OF_WORK,
-			"foreignField": hr_common.FLD_SHIFT_ID,
-			"as":           hr_common.FLD_SHIFT_INFO,
-			"pipeline": []bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_TYPE_OF_WORK,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{"$project": bson.M{
+				{hr_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:              0,
 					platform_common.FLD_APP_USER_PASSWORD: 0,
 					db_common.FLD_IS_DELETED:              0,
@@ -376,14 +375,14 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Token ========================================
 	lookupStage = bson.M{
-		"$lookup": bson.M{
-			"from":         hr_common.DbHrWorkLocations,
-			"localField":   hr_common.FLD_WORKLOCATION,
-			"foreignField": hr_common.FLD_WORKLOCATION_ID,
-			"as":           hr_common.FLD_WORKLOCATION_INFO,
-			"pipeline": []bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrWorkLocations,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_WORKLOCATION,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_WORKLOCATION_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_WORKLOCATION_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{"$project": bson.M{
+				{hr_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID: 0,
 					db_common.FLD_IS_DELETED: 0,
 					db_common.FLD_CREATED_AT: 0,
