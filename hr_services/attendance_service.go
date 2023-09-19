@@ -252,7 +252,13 @@ func (p *attendanceBaseService) Update(attendance_id string, indata utils.Map) (
 	delete(indata, hr_common.FLD_ATTENDANCE_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 	delete(indata, hr_common.FLD_STAFF_ID)
-	delete(indata, hr_common.FLD_DATETIME)
+	//delete(indata, hr_common.FLD_DATETIME)
+
+	// Convert Date_time string to Date Format
+	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
+		layout := "2006-01-02 03:04:05 PM"
+		indata[hr_common.FLD_DATETIME], _ = time.Parse(layout, dataVal.(string))
+	}
 
 	data, err = p.daoAttendance.Update(attendance_id, indata)
 	log.Println("AttendanceService::Update - End ")
