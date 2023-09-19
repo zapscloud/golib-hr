@@ -195,6 +195,8 @@ func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
 // ************************
 func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) {
 
+	var err error = nil
+
 	log.Println("AttendanceService::Create - Begin")
 	var attendanceId string
 
@@ -218,10 +220,13 @@ func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) 
 	// Convert Date_time string to Date Format
 	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
 		layout := "2006-01-02 03:04:05 PM"
-		indata[hr_common.FLD_DATETIME], _ = time.Parse(layout, dataVal.(string))
+		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	_, err := p.daoAttendance.Get(attendanceId)
+	_, err = p.daoAttendance.Get(attendanceId)
 	if err == nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Attendance ID !", ErrorDetail: "Given Attendance ID already exist"}
 		return indata, err
@@ -257,7 +262,10 @@ func (p *attendanceBaseService) Update(attendance_id string, indata utils.Map) (
 	// Convert Date_time string to Date Format
 	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
 		layout := "2006-01-02 03:04:05 PM"
-		indata[hr_common.FLD_DATETIME], _ = time.Parse(layout, dataVal.(string))
+		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	data, err = p.daoAttendance.Update(attendance_id, indata)
