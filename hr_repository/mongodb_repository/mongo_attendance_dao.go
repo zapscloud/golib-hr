@@ -337,7 +337,7 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
 			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAF_INFO,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
 				{hr_common.MONGODB_PROJECT: bson.M{

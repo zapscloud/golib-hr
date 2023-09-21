@@ -65,7 +65,7 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
 			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAF_INFO,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
 		},
 	}
 	stages = append(stages, lookupStage)

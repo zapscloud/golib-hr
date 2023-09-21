@@ -60,9 +60,10 @@ const (
 	FLD_BUSINESS_ID = platform_common.FLD_BUSINESS_ID
 
 	// Staff table fields
-	FLD_STAFF_ID   = "staff_id"
-	FLD_STAFF_DATA = "staff_data"
-	FLD_STAF_INFO  = "staff_info"
+	FLD_STAFF_ID            = "staff_id"
+	FLD_STAFF_DATA          = "staff_data"
+	FLD_STAFF_INFO          = "staff_info"
+	FLD_STAFF_LAST_CLOCK_IN = "last_clock_in_attendance_id"
 
 	// StaffType table fields
 	FLD_STAFFTYPE_ID          = "staff_type_id"
@@ -100,6 +101,8 @@ const (
 	FLD_DATETIME        = "date_time"
 	FLD_LATITUDE        = "latitude"
 	FLD_LONGITUDE       = "longitude"
+	FLD_CLOCK_IN        = "clock_in"
+	FLD_CLOCK_OUT       = "clock_out"
 
 	// Leave Table
 	FLD_LEAVE_ID          = "leave_id"
@@ -121,6 +124,10 @@ const (
 	FLD_WORKLOCATION_NAME        = "work_location_name"
 	FLD_WORKLOCATION_DESCRIPTION = "work_location_description"
 	FLD_WORKLOCATION             = "work_location"
+)
+
+const (
+	DATETIME_PARSE_FORMAT = "2006-01-02 03:04:05 PM"
 )
 
 func init() {

@@ -2,7 +2,6 @@ package hr_services
 
 import (
 	"log"
-	"strings"
 	"time"
 
 	"github.com/zapscloud/golib-dbutils/db_common"
@@ -25,6 +24,10 @@ type AttendanceService interface {
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
 	CreateMany(indata utils.Map) (utils.Map, error)
+	ClockIn(indata utils.Map) (utils.Map, error)
+	ClockInMany(indata utils.Map) (utils.Map, error)
+	ClockOut(attendance_id string, indata utils.Map) (utils.Map, error)
+	ClockOutMany(indata utils.Map) (utils.Map, error)
 	Update(attendance_id string, indata utils.Map) (utils.Map, error)
 	Delete(attendance_id string, delete_permanent bool) error
 
@@ -155,58 +158,43 @@ func (p *attendanceBaseService) Find(filter string) (utils.Map, error) {
 func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("AttendanceService::Create - Begin")
-	var attendanceId string
 
-	dataval, dataok := indata[hr_common.FLD_ATTENDANCE_ID]
-	if dataok {
-		attendanceId = strings.ToLower(dataval.(string))
-	} else {
-		attendanceId = utils.GenerateUniqueId("atten")
-		log.Println("Unique Attendance ID", attendanceId)
-	}
+	// Create AttendanceId
+	attendanceId := p.createAttendanceId(indata)
 
 	if utils.IsEmpty(p.staffId) {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "No StaffId", ErrorDetail: "No StaffId passed"}
+		err := &utils.AppError{
+			ErrorCode:   "S30102",
+			ErrorMsg:    "No StaffId",
+			ErrorDetail: "No StaffId passed"}
 		return indata, err
 	}
+
 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
 	indata[hr_common.FLD_STAFF_ID] = p.staffId
 	indata[hr_common.FLD_DATETIME] = time.Now().UTC() //.Format("2006-01-02 15:04:05")
+
 	log.Println("Provided Attendance ID:", attendanceId)
 
-	_, err := p.daoAttendance.Get(attendanceId)
-	if err == nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Attendance ID !", ErrorDetail: "Given Attendance ID already exist"}
-		return indata, err
-	}
-
 	insertResult, err := p.daoAttendance.Create(indata)
-	if err != nil {
-		return indata, err
-	}
 	log.Println("AttendanceService::Create - End ", insertResult)
+
 	return indata, err
 }
 
-// ************************
+// ********************************
 // CreateMany - CreateMany Service
 //
-// ************************
+// ********************************
 func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) {
 
 	var err error = nil
 
-	log.Println("AttendanceService::Create - Begin")
-	var attendanceId string
+	log.Println("AttendanceService::CreateMany - Begin")
 
-	dataval, dataok := indata[hr_common.FLD_ATTENDANCE_ID]
-	if dataok {
-		attendanceId = strings.ToLower(dataval.(string))
-	} else {
-		attendanceId = utils.GenerateUniqueId("atten")
-		log.Println("Unique Attendance ID", attendanceId)
-	}
+	// Create AttendanceId
+	attendanceId := p.createAttendanceId(indata)
 
 	// Check staffId received in indata
 	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
@@ -226,18 +214,151 @@ func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) 
 		}
 	}
 
-	_, err = p.daoAttendance.Get(attendanceId)
-	if err == nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Attendance ID !", ErrorDetail: "Given Attendance ID already exist"}
+	insertResult, err := p.daoAttendance.Create(indata)
+
+	log.Println("AttendanceService::Create - End ", insertResult)
+	return indata, err
+}
+
+// *************************
+// ClockIn - Clock IN
+//
+// ************************
+func (p *attendanceBaseService) ClockIn(indata utils.Map) (utils.Map, error) {
+	var err error = nil
+
+	log.Println("AttendanceService::ClockIn - Begin")
+
+	// Create AttendanceId
+	attendanceId := p.createAttendanceId(indata)
+
+	// Add Current DateTime
+	indata[hr_common.FLD_DATETIME] = time.Now().UTC()
+
+	// Create ClockIn Data
+	var clockIn utils.Map = utils.Map{}
+
+	clockIn[hr_common.FLD_ATTENDANCE_ID] = attendanceId
+	clockIn[hr_common.FLD_BUSINESS_ID] = p.businessId
+	clockIn[hr_common.FLD_STAFF_ID] = p.staffId
+
+	// Update Clock-In Interface back
+	clockIn[hr_common.FLD_CLOCK_IN] = indata
+
+	_, err = p.daoAttendance.Create(clockIn)
+
+	log.Println("AttendanceService::ClockIn - End")
+	return clockIn, err
+}
+
+// *************************************************
+// ClockInMany - Clock In with StaffId and DateTime
+//
+// ************************************************
+func (p *attendanceBaseService) ClockInMany(indata utils.Map) (utils.Map, error) {
+	var err error = nil
+
+	log.Println("AttendanceService::ClockInMany - Begin")
+
+	// Create AttendanceId
+	attendanceId := p.createAttendanceId(indata)
+
+	// Check staffId received in indata
+	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
+	_, err = p.daoStaff.Get(staffId)
+	if err != nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Invalid StaffId", ErrorDetail: "No such StaffId found"}
 		return indata, err
 	}
+	// Convert Date_time string to Date Format
+	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
+	if err == nil {
+		layout := hr_common.DATETIME_PARSE_FORMAT
+		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// Remove StaffId from indata
+	delete(indata, hr_common.FLD_STAFF_ID)
 
-	insertResult, err := p.daoAttendance.Create(indata)
+	// Prepare ClockIn Data
+	var clockIn utils.Map = utils.Map{}
+	clockIn[hr_common.FLD_ATTENDANCE_ID] = attendanceId
+	clockIn[hr_common.FLD_BUSINESS_ID] = p.businessId
+	clockIn[hr_common.FLD_STAFF_ID] = staffId
+
+	// Update Clock-In Interface back
+	clockIn[hr_common.FLD_CLOCK_IN] = indata
+
+	insertResult, err := p.daoAttendance.Create(clockIn)
+
+	log.Println("AttendanceService::ClockInMany - End ", insertResult)
+	return clockIn, err
+
+}
+
+// *************************
+// ClockOut - Clock Out
+//
+// ************************
+func (p *attendanceBaseService) ClockOut(attendance_id string, indata utils.Map) (utils.Map, error) {
+	var err error = nil
+
+	log.Println("AttendanceService::ClockOut - Begin")
+
+	data, err := p.daoAttendance.Get(attendance_id)
 	if err != nil {
 		return indata, err
 	}
-	log.Println("AttendanceService::Create - End ", insertResult)
-	return indata, err
+
+	// Update DateTime
+	indata[hr_common.FLD_DATETIME] = time.Now().UTC()
+
+	// Update Clock-In Interface back
+	data[hr_common.FLD_CLOCK_OUT] = indata
+
+	_, err = p.daoAttendance.Update(attendance_id, data)
+
+	log.Println("AttendanceService::ClockIn - End")
+	return data, err
+}
+
+// *************************************************
+// ClockInMany - Clock Out with AttendanceId and DateTime
+//
+// ************************************************
+func (p *attendanceBaseService) ClockOutMany(indata utils.Map) (utils.Map, error) {
+	var err error = nil
+
+	log.Println("AttendanceService::ClockOutMany - Begin")
+	// Check staffId received in indata
+	attendanceId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_ATTENDANCE_ID)
+	data, err := p.daoAttendance.Get(attendanceId)
+	if err != nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Invalid AttendanceId", ErrorDetail: "No such AttendanceId found"}
+		return indata, err
+	}
+	// Convert Date_time string to Date Format
+	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
+	if err == nil {
+		layout := hr_common.DATETIME_PARSE_FORMAT
+		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// Remove StaffId from indata
+	delete(indata, hr_common.FLD_ATTENDANCE_ID)
+
+	// Update Clock-In Interface back
+	data[hr_common.FLD_CLOCK_OUT] = indata
+
+	_, err = p.daoAttendance.Update(attendanceId, data)
+
+	log.Println("AttendanceService::ClockIn - End")
+	return data, err
+
 }
 
 // ************************
@@ -305,4 +426,9 @@ func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err
+}
+
+func (p *attendanceBaseService) createAttendanceId(indata utils.Map) string {
+
+	return utils.GenerateUniqueId("atten")
 }
