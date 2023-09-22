@@ -81,7 +81,7 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 				hr_common.FLD_STAFF_ID: "$" + hr_common.FLD_STAFF_ID,
 				"for_date": bson.M{
 					hr_common.MONGODB_DATETOSTRING: bson.M{
-						hr_common.MONGODB_STR_FORMAT: "%Y-%m-%d", "date": "$" + hr_common.FLD_DATETIME}},
+						hr_common.MONGODB_STR_FORMAT: "%Y-%m-%d", "date": "$" + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_DATETIME}},
 			},
 			"docs": bson.M{hr_common.MONGODB_PUSH: "$$ROOT"},
 		},
@@ -97,8 +97,6 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 			"docs." + db_common.FLD_UPDATED_AT:  0,
 			"docs." + db_common.FLD_IS_DELETED:  0,
 			"docs." + hr_common.FLD_BUSINESS_ID: 0,
-			"docs." + hr_common.FLD_LATITUDE:    0,
-			"docs." + hr_common.FLD_LONGITUDE:   0,
 		},
 	}
 	// Add it to Aggregate Stage
@@ -131,7 +129,7 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 	lookupStage2 := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
 			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
-			hr_common.MONGODB_STR_LOCALFIELD:   "docs.type_of_work",
+			hr_common.MONGODB_STR_LOCALFIELD:   "docs." + hr_common.FLD_CLOCK_IN + "." + "type_of_work",
 			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
 			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
@@ -153,7 +151,7 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 	lookupStage3 := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
 			hr_common.MONGODB_STR_FROM:         hr_common.DbHrWorkLocations,
-			hr_common.MONGODB_STR_LOCALFIELD:   "docs.work_location",
+			hr_common.MONGODB_STR_LOCALFIELD:   "docs." + hr_common.FLD_CLOCK_IN + "." + "work_location",
 			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_WORKLOCATION_ID,
 			hr_common.MONGODB_STR_AS:           hr_common.FLD_WORKLOCATION_INFO,
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
