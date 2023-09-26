@@ -22,8 +22,8 @@ type AttendanceService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
 	Get(attendance_id string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
-	Create(indata utils.Map) (utils.Map, error)
-	CreateMany(indata utils.Map) (utils.Map, error)
+	// Create(indata utils.Map) (utils.Map, error)
+	// CreateMany(indata utils.Map) (utils.Map, error)
 	ClockIn(indata utils.Map) (utils.Map, error)
 	ClockInMany(indata utils.Map) (utils.Map, error)
 	ClockOut(attendance_id string, indata utils.Map) (utils.Map, error)
@@ -155,70 +155,70 @@ func (p *attendanceBaseService) Find(filter string) (utils.Map, error) {
 // Create - Create Service
 //
 // ************************
-func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
+// func (p *attendanceBaseService) Create(indata utils.Map) (utils.Map, error) {
 
-	log.Println("AttendanceService::Create - Begin")
+// 	log.Println("AttendanceService::Create - Begin")
 
-	// Create AttendanceId
-	attendanceId := p.createAttendanceId(indata)
+// 	// Create AttendanceId
+// 	attendanceId := p.createAttendanceId(indata)
 
-	if utils.IsEmpty(p.staffId) {
-		err := &utils.AppError{
-			ErrorCode:   "S30102",
-			ErrorMsg:    "No StaffId",
-			ErrorDetail: "No StaffId passed"}
-		return indata, err
-	}
+// 	if utils.IsEmpty(p.staffId) {
+// 		err := &utils.AppError{
+// 			ErrorCode:   "S30102",
+// 			ErrorMsg:    "No StaffId",
+// 			ErrorDetail: "No StaffId passed"}
+// 		return indata, err
+// 	}
 
-	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
-	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
-	indata[hr_common.FLD_STAFF_ID] = p.staffId
-	indata[hr_common.FLD_DATETIME] = time.Now().UTC() //.Format("2006-01-02 15:04:05")
+// 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
+// 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
+// 	indata[hr_common.FLD_STAFF_ID] = p.staffId
+// 	indata[hr_common.FLD_DATETIME] = time.Now().UTC() //.Format("2006-01-02 15:04:05")
 
-	log.Println("Provided Attendance ID:", attendanceId)
+// 	log.Println("Provided Attendance ID:", attendanceId)
 
-	insertResult, err := p.daoAttendance.Create(indata)
-	log.Println("AttendanceService::Create - End ", insertResult)
+// 	insertResult, err := p.daoAttendance.Create(indata)
+// 	log.Println("AttendanceService::Create - End ", insertResult)
 
-	return indata, err
-}
+// 	return indata, err
+// }
 
 // ********************************
 // CreateMany - CreateMany Service
 //
 // ********************************
-func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) {
+// func (p *attendanceBaseService) CreateMany(indata utils.Map) (utils.Map, error) {
 
-	var err error = nil
+// 	var err error = nil
 
-	log.Println("AttendanceService::CreateMany - Begin")
+// 	log.Println("AttendanceService::CreateMany - Begin")
 
-	// Create AttendanceId
-	attendanceId := p.createAttendanceId(indata)
+// 	// Create AttendanceId
+// 	attendanceId := p.createAttendanceId(indata)
 
-	// Check staffId received in indata
-	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
-	if utils.IsEmpty(staffId) {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "No StaffId", ErrorDetail: "No StaffId passed"}
-		return indata, err
-	}
-	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
-	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
+// 	// Check staffId received in indata
+// 	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
+// 	if utils.IsEmpty(staffId) {
+// 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "No StaffId", ErrorDetail: "No StaffId passed"}
+// 		return indata, err
+// 	}
+// 	indata[hr_common.FLD_ATTENDANCE_ID] = attendanceId
+// 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
 
-	// Convert Date_time string to Date Format
-	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
-		layout := "2006-01-02 03:04:05 PM"
-		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
-		if err != nil {
-			return nil, err
-		}
-	}
+// 	// Convert Date_time string to Date Format
+// 	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
+// 		layout := hr_common.DATETIME_PARSE_FORMAT
+// 		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 	}
 
-	insertResult, err := p.daoAttendance.Create(indata)
+// 	insertResult, err := p.daoAttendance.Create(indata)
 
-	log.Println("AttendanceService::Create - End ", insertResult)
-	return indata, err
-}
+// 	log.Println("AttendanceService::Create - End ", insertResult)
+// 	return indata, err
+// }
 
 // *************************
 // ClockIn - Clock IN
@@ -378,13 +378,22 @@ func (p *attendanceBaseService) Update(attendance_id string, indata utils.Map) (
 	delete(indata, hr_common.FLD_ATTENDANCE_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 	delete(indata, hr_common.FLD_STAFF_ID)
-	//delete(indata, hr_common.FLD_DATETIME)
+	delete(indata, hr_common.FLD_DATETIME)
 
-	// Convert Date_time string to Date Format
-	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
-		layout := "2006-01-02 03:04:05 PM"
-		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
+	// Convert clock_in->date_time string to Date Format
+	if dataVal, dataOk := indata[hr_common.FLD_CLOCK_IN]; dataOk {
+		_, err = p.convertStrToDateFormat(dataVal.(map[string]interface{}))
 		if err != nil {
+			log.Println("Failed to Parse clock_in->date_time", err)
+			return nil, err
+		}
+	}
+
+	// Convert clock_in->date_time string to Date Format
+	if dataVal, dataOk := indata[hr_common.FLD_CLOCK_OUT]; dataOk {
+		_, err = p.convertStrToDateFormat(dataVal.(map[string]interface{}))
+		if err != nil {
+			log.Println("Failed to Parse clock_out->date_time", err)
 			return nil, err
 		}
 	}
@@ -426,6 +435,21 @@ func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err
+}
+
+func (p *attendanceBaseService) convertStrToDateFormat(indata utils.Map) (utils.Map, error) {
+	var err error = nil
+
+	// Convert Date_time string to Date Format
+	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
+		layout := hr_common.DATETIME_PARSE_FORMAT
+		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return indata, err
 }
 
 func (p *attendanceBaseService) createAttendanceId(indata utils.Map) string {
