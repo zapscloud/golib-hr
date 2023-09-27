@@ -90,7 +90,7 @@ func CreateAttendance(srv hr_services.AttendanceService) {
 		"role_scope": "admin",
 	}
 
-	res, err := srv.Create(indata)
+	res, err := srv.ClockIn(indata)
 	log.Println("Create Attendance", err)
 	pretty.Println(res)
 

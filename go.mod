@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/kr/pretty v0.3.1
 	github.com/zapscloud/golib-business v1.0.1-0.20230809094237-dc0feae46251
-	github.com/zapscloud/golib-dbutils v1.0.1-0.20230622114802-1f082f911d85
+	github.com/zapscloud/golib-dbutils v1.1.1-0.20230927092728-aa1a593285bb
 	github.com/zapscloud/golib-platform v1.0.1-0.20230717035535-065ad346237d
 	github.com/zapscloud/golib-utils v1.0.1-0.20230830110037-ce8b7333310f
 	go.mongodb.org/mongo-driver v1.11.7
