@@ -12,7 +12,7 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// ClientService - Accounts Service structure
+// ClientService - Clients Service structure
 type ClientService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
 	Get(clientId string) (utils.Map, error)
@@ -28,10 +28,10 @@ type ClientService interface {
 	EndService()
 }
 
-// ClientBaseService - Accounts Service structure
+// ClientBaseService - Clients Service structure
 type clientBaseService struct {
 	db_utils.DatabaseService
-	daoClient     hr_repository.ClientDao
+	daoClient           hr_repository.ClientDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	child               ClientService
 	businessID          string
@@ -83,7 +83,7 @@ func (p *clientBaseService) EndService() {
 // List - List All records
 func (p *clientBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
-	log.Println("AccountService::FindAll - Begin")
+	log.Println("ClientService::FindAll - Begin")
 
 	daoClient := p.daoClient
 	response, err := daoClient.List(filter, sort, skip, limit)
@@ -91,24 +91,24 @@ func (p *clientBaseService) List(filter string, sort string, skip int64, limit i
 		return nil, err
 	}
 
-	log.Println("AccountService::FindAll - End ")
+	log.Println("ClientService::FindAll - End ")
 	return response, nil
 }
 
 // FindByCode - Find By Code
 func (p *clientBaseService) Get(clientId string) (utils.Map, error) {
-	log.Printf("AccountService::FindByCode::  Begin %v", clientId)
+	log.Printf("ClientService::FindByCode::  Begin %v", clientId)
 
 	data, err := p.daoClient.Get(clientId)
-	log.Println("AccountService::FindByCode:: End ", err)
+	log.Println("ClientService::FindByCode:: End ", err)
 	return data, err
 }
 
 func (p *clientBaseService) Find(filter string) (utils.Map, error) {
-	log.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("ClientService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoClient.Find(filter)
-	log.Println("AccountService::FindByCode:: End ", data, err)
+	log.Println("ClientService::FindByCode:: End ", data, err)
 	return data, err
 }
 
@@ -122,16 +122,16 @@ func (p *clientBaseService) Create(indata utils.Map) (utils.Map, error) {
 	if dataok {
 		clientId = strings.ToLower(dataval.(string))
 	} else {
-		clientId = utils.GenerateUniqueId("clt")
-		log.Println("Unique Account ID", clientId)
+		clientId = utils.GenerateUniqueId("clnt")
+		log.Println("Unique Client ID", clientId)
 	}
 	indata[hr_common.FLD_CLIENT_ID] = clientId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessID
-	log.Println("Provided Account ID:",clientId)
+	log.Println("Provided Client ID:", clientId)
 
 	_, err := p.daoClient.Get(clientId)
 	if err == nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Client ID !", ErrorDetail: "Given Client ID already exist"}
 		return indata, err
 	}
 
@@ -146,7 +146,7 @@ func (p *clientBaseService) Create(indata utils.Map) (utils.Map, error) {
 // Update - Update Service
 func (p *clientBaseService) Update(clientId string, indata utils.Map) (utils.Map, error) {
 
-	log.Println("AccountService::Update - Begin")
+	log.Println("ClientService::Update - Begin")
 
 	data, err := p.daoClient.Get(clientId)
 	if err != nil {
@@ -158,14 +158,14 @@ func (p *clientBaseService) Update(clientId string, indata utils.Map) (utils.Map
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 
 	data, err = p.daoClient.Update(clientId, indata)
-	log.Println("AccountService::Update - End ")
+	log.Println("ClientService::Update - End ")
 	return data, err
 }
 
 // Delete - Delete Service
 func (p *clientBaseService) Delete(clientId string, delete_permanent bool) error {
 
-	log.Println("AccountService::Delete - Begin", clientId)
+	log.Println("ClientService::Delete - Begin", clientId)
 
 	daoClient := p.daoClient
 	if delete_permanent {

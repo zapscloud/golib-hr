@@ -12,7 +12,7 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// ProjectService - Accounts Service structure
+// ProjectService - Projects Service structure
 type ProjectService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
 	Get(projectId string) (utils.Map, error)
@@ -28,7 +28,7 @@ type ProjectService interface {
 	EndService()
 }
 
-// ProjectBaseService - Accounts Service structure
+// ProjectBaseService - Projects Service structure
 type ProjectBaseService struct {
 	db_utils.DatabaseService
 	daoProject          hr_repository.ProjectDao
@@ -83,7 +83,7 @@ func (p *ProjectBaseService) EndService() {
 // List - List All records
 func (p *ProjectBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
-	log.Println("AccountService::FindAll - Begin")
+	log.Println("ProjectService::FindAll - Begin")
 
 	daoProject := p.daoProject
 	response, err := daoProject.List(filter, sort, skip, limit)
@@ -91,24 +91,24 @@ func (p *ProjectBaseService) List(filter string, sort string, skip int64, limit 
 		return nil, err
 	}
 
-	log.Println("AccountService::FindAll - End ")
+	log.Println("ProjectService::FindAll - End ")
 	return response, nil
 }
 
 // FindByCode - Find By Code
 func (p *ProjectBaseService) Get(projectId string) (utils.Map, error) {
-	log.Printf("AccountService::FindByCode::  Begin %v", projectId)
+	log.Printf("ProjectService::FindByCode::  Begin %v", projectId)
 
 	data, err := p.daoProject.Get(projectId)
-	log.Println("AccountService::FindByCode:: End ", err)
+	log.Println("ProjectService::FindByCode:: End ", err)
 	return data, err
 }
 
 func (p *ProjectBaseService) Find(filter string) (utils.Map, error) {
-	log.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("ProjectService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoProject.Find(filter)
-	log.Println("AccountService::FindByCode:: End ", data, err)
+	log.Println("ProjectService::FindByCode:: End ", data, err)
 	return data, err
 }
 
@@ -123,15 +123,15 @@ func (p *ProjectBaseService) Create(indata utils.Map) (utils.Map, error) {
 		ProjectId = strings.ToLower(dataval.(string))
 	} else {
 		ProjectId = utils.GenerateUniqueId("projt")
-		log.Println("Unique Account ID", ProjectId)
+		log.Println("Unique Project ID", ProjectId)
 	}
 	indata[hr_common.FLD_PROJECT_ID] = ProjectId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessID
-	log.Println("Provided Account ID:", ProjectId)
+	log.Println("Provided Project ID:", ProjectId)
 
 	_, err := p.daoProject.Get(ProjectId)
 	if err == nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Project ID !", ErrorDetail: "Given Project ID already exist"}
 		return indata, err
 	}
 
@@ -146,7 +146,7 @@ func (p *ProjectBaseService) Create(indata utils.Map) (utils.Map, error) {
 // Update - Update Service
 func (p *ProjectBaseService) Update(projectId string, indata utils.Map) (utils.Map, error) {
 
-	log.Println("AccountService::Update - Begin")
+	log.Println("ProjectService::Update - Begin")
 
 	data, err := p.daoProject.Get(projectId)
 	if err != nil {
@@ -158,14 +158,14 @@ func (p *ProjectBaseService) Update(projectId string, indata utils.Map) (utils.M
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 
 	data, err = p.daoProject.Update(projectId, indata)
-	log.Println("AccountService::Update - End ")
+	log.Println("ProjectService::Update - End ")
 	return data, err
 }
 
 // Delete - Delete Service
 func (p *ProjectBaseService) Delete(projectId string, delete_permanent bool) error {
 
-	log.Println("AccountService::Delete - Begin", projectId)
+	log.Println("ProjectService::Delete - Begin", projectId)
 
 	daoProject := p.daoProject
 	if delete_permanent {
