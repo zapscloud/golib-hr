@@ -22,6 +22,8 @@ const (
 	DbHrShifts        = DbPrefix + "hr_shifts"
 	DbHrWorkLocations = DbPrefix + "hr_work_locations"
 	DbHrLeaveTypes    = DbPrefix + "hr_leave_types"
+	DbHrClients       = DbPrefix + "hr_clients"
+	DbHrProjects      = DbPrefix + "hr_projects"
 )
 
 const (
@@ -124,6 +126,16 @@ const (
 	FLD_WORKLOCATION_NAME        = "work_location_name"
 	FLD_WORKLOCATION_DESCRIPTION = "work_location_description"
 	FLD_WORKLOCATION             = "work_location"
+
+	//Clients Table
+	FLD_CLIENT_ID          = "client_id"
+	FLD_CLIENT_NAME        = "client_name"
+	FLD_CLIENT_DESCRIPTION = "client_description"
+
+	//Projects Table
+	FLD_PROJECT_ID          = "project_id"
+	FLD_PROJECT_NAME        = "project_name"
+	FLD_PROJECT_DESCRIPTION = "project_description"
 )
 
 const (
