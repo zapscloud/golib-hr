@@ -37,6 +37,7 @@ func (p *AttendanceMongoDBDao) InitializeDao(client utils.Map, bussinesId string
 
 func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
+	var bFilter bool = false
 
 	log.Println("Begin - Find All Collection Dao", hr_common.DbHrAttendances)
 
@@ -55,6 +56,7 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
 		}
+		bFilter = true
 	}
 
 	// All Stages
@@ -94,6 +96,45 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		}
 	}
 
+	var filtercount int64 = 0
+	if bFilter {
+		// Prepare Filter Stages
+		filterStages := stages
+
+		// Add Count aggregate
+		countStage := bson.M{hr_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
+		filterStages = append(filterStages, countStage)
+
+		//log.Println("Aggregate for Count ====>", filterStages, stages)
+
+		// Execute aggregate to find the count of filtered_size
+		cursor, err := collection.Aggregate(ctx, filterStages)
+		if err != nil {
+			log.Println("Error in Aggregate", err)
+			return nil, err
+		}
+		var countResult []utils.Map
+		if err = cursor.All(ctx, &countResult); err != nil {
+			log.Println("Error in cursor.all", err)
+			return nil, err
+		}
+		if countResult == nil {
+			countResult = []utils.Map{}
+		}
+
+		//log.Println("Count Filter ===>", countResult)
+		if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
+			filtercount = int64(dataVal.(int32))
+		}
+		// log.Println("Count ===>", filtercount)
+
+	} else {
+		filtercount, err = collection.CountDocuments(ctx, filterdoc)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if skip > 0 {
 		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
@@ -115,10 +156,7 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 		return nil, err
 	}
 
-	filtercount, err := collection.CountDocuments(ctx, filterdoc)
-	if err != nil {
-		return utils.Map{}, err
-	}
+
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
@@ -129,6 +167,9 @@ func (p *AttendanceMongoDBDao) List(filter string, sort string, skip int64, limi
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return utils.Map{}, err
+	}
+	if results == nil {
+		results = []utils.Map{}
 	}
 
 	response := utils.Map{
@@ -330,8 +371,8 @@ func (p *AttendanceMongoDBDao) Delete(attendanceId string) (int64, error) {
 }
 func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
-	// Lookup Stage for Token ========================================
-	// Lookup Stage
+	// Lookup Stage for Token PlatformAppUsers ========================================
+
 	lookupStage := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
 			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
@@ -345,11 +386,12 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 					db_common.FLD_IS_DELETED:              0,
 					db_common.FLD_CREATED_AT:              0,
 					db_common.FLD_UPDATED_AT:              0,
+					hr_common.FLD_BUSINESS_ID:             0,
 					platform_common.FLD_APP_USER_PASSWORD: 0}},
 			},
 		},
 	}
-	// Add it to Aggregate Stage
+	// Add it to Aggregate Stage Shift
 	stages = append(stages, lookupStage)
 
 	// Lookup Stage for User ==========================================
@@ -366,11 +408,12 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 					platform_common.FLD_APP_USER_PASSWORD: 0,
 					db_common.FLD_IS_DELETED:              0,
 					db_common.FLD_CREATED_AT:              0,
+					hr_common.FLD_BUSINESS_ID:             0,
 					db_common.FLD_UPDATED_AT:              0}},
 			},
 		},
 	}
-	// Add it to Aggregate Stage
+	// Add it to Aggregate Stage Worklocation
 	stages = append(stages, lookupStage)
 
 	// Lookup Stage for Token ========================================
@@ -383,10 +426,11 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
 				{hr_common.MONGODB_PROJECT: bson.M{
-					db_common.FLD_DEFAULT_ID: 0,
-					db_common.FLD_IS_DELETED: 0,
-					db_common.FLD_CREATED_AT: 0,
-					db_common.FLD_UPDATED_AT: 0}},
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					hr_common.FLD_BUSINESS_ID: 0,
+					db_common.FLD_UPDATED_AT:  0}},
 			},
 		},
 	}

@@ -33,7 +33,7 @@ func (p *LeaveMongoDBDao) InitializeDao(client utils.Map, businessId string, sta
 // List - List all Collections
 func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
-
+	var bFilter bool = false
 	log.Println("Begin - Find All Collection Dao", hr_common.DbHrLeaves)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
@@ -50,6 +50,7 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
 		}
+		bFilter = true
 	}
 
 	// All Stages
@@ -59,27 +60,8 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 
-	// Lookup Stage
-	lookupStage := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
-		},
-	}
-	stages = append(stages, lookupStage)
-
-	// Lookup Stage for Leave Info
-	lookupLeaveStage := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrLeaveTypes,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_LEAVETYPE_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_LEAVETYPE_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_LEAVE_INFO,
-		},
-	}
-	stages = append(stages, lookupLeaveStage)
+	// Add Lookup stages
+	stages = p.appendListLookups(stages)
 
 	// Match Stage
 	filterdoc = append(filterdoc,
@@ -104,6 +86,45 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 		}
 	}
 
+	var filtercount int64 = 0
+	if bFilter {
+		// Prepare Filter Stages
+		filterStages := stages
+
+		// Add Count aggregate
+		countStage := bson.M{hr_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
+		filterStages = append(filterStages, countStage)
+
+		//log.Println("Aggregate for Count ====>", filterStages, stages)
+
+		// Execute aggregate to find the count of filtered_size
+		cursor, err := collection.Aggregate(ctx, filterStages)
+		if err != nil {
+			log.Println("Error in Aggregate", err)
+			return nil, err
+		}
+		var countResult []utils.Map
+		if err = cursor.All(ctx, &countResult); err != nil {
+			log.Println("Error in cursor.all", err)
+			return nil, err
+		}
+		if countResult == nil {
+			countResult = []utils.Map{}
+		}
+
+		//log.Println("Count Filter ===>", countResult)
+		if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
+			filtercount = int64(dataVal.(int32))
+		}
+		// log.Println("Count ===>", filtercount)
+
+	} else {
+		filtercount, err = collection.CountDocuments(ctx, filterdoc)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if skip > 0 {
 		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
@@ -125,10 +146,7 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 		return nil, err
 	}
 
-	filtercount, err := collection.CountDocuments(ctx, filterdoc)
-	if err != nil {
-		return utils.Map{}, err
-	}
+
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
@@ -139,6 +157,10 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
 	if err != nil {
 		return utils.Map{}, err
+	}
+	
+	if results == nil {
+		results = []utils.Map{}
 	}
 
 	response := utils.Map{
@@ -339,4 +361,52 @@ func (p *LeaveMongoDBDao) DeleteAll() (int64, error) {
 	}
 	log.Printf("accountMongoDao::DeleteAll - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
+}
+
+func (p *LeaveMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
+
+	// Lookup Stage for PlatformAppUsers ========================================
+	lookupStage := bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID: 0,
+					db_common.FLD_IS_DELETED: 0,
+					db_common.FLD_CREATED_AT: 0,
+					db_common.FLD_UPDATED_AT: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	// Lookup Stage for User ==========================================
+	lookupStage = bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrLeaveTypes,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_LEAVETYPE_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_LEAVETYPE_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_LEAVE_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID:              0,
+					platform_common.FLD_APP_USER_ID:       0,
+					"auth_key":                            0,
+					platform_common.FLD_APP_USER_PASSWORD: 0,
+					db_common.FLD_IS_DELETED:              0,
+					db_common.FLD_CREATED_AT:              0,
+					db_common.FLD_UPDATED_AT:              0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	return stages
 }
