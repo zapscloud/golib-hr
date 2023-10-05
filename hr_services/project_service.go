@@ -116,20 +116,20 @@ func (p *ProjectBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("UserService::Create - Begin")
 
-	var ProjectId string
+	var projectId string
 
 	dataval, dataok := indata[hr_common.FLD_PROJECT_ID]
 	if dataok {
-		ProjectId = strings.ToLower(dataval.(string))
+		projectId = strings.ToLower(dataval.(string))
 	} else {
-		ProjectId = utils.GenerateUniqueId("projt")
-		log.Println("Unique Project ID", ProjectId)
+		projectId = utils.GenerateUniqueId("projt")
+		log.Println("Unique Project ID", projectId)
 	}
-	indata[hr_common.FLD_PROJECT_ID] = ProjectId
+	indata[hr_common.FLD_PROJECT_ID] = projectId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessID
-	log.Println("Provided Project ID:", ProjectId)
+	log.Println("Provided Project ID:", projectId)
 
-	_, err := p.daoProject.Get(ProjectId)
+	_, err := p.daoProject.Get(projectId)
 	if err == nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Project ID !", ErrorDetail: "Given Project ID already exist"}
 		return indata, err

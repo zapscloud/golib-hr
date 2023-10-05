@@ -163,7 +163,8 @@ func (p *ProjectMongoDBDao) Get(projectId string) (utils.Map, error) {
 	if !singleResult.Next(ctx) {
 		// No matching document found
 		log.Println("GetDetails:: Record not found")
-		return result, nil
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Record Not Found", ErrorDetail: "Given ProjectID is not found"}
+		return result, err
 	}
 
 	if err := singleResult.Decode(&result); err != nil {
@@ -332,10 +333,10 @@ func (p *ProjectMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
 				{hr_common.MONGODB_PROJECT: bson.M{
-					db_common.FLD_DEFAULT_ID:        0,
-					db_common.FLD_IS_DELETED:        0,
-					db_common.FLD_CREATED_AT:        0,
-					db_common.FLD_UPDATED_AT:        0,
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					db_common.FLD_UPDATED_AT:  0,
 					hr_common.FLD_BUSINESS_ID: 0}},
 			},
 		},
