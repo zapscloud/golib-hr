@@ -49,6 +49,7 @@ const (
 	MONGODB_STR_FORMAT       = "format"
 )
 
+// Dynamic Fields
 const (
 	FLD_BUSINESS_USER_INFO = "business_user_info"
 	FLD_APP_USER_INFO      = "app_user_info"
@@ -56,7 +57,10 @@ const (
 	FLD_SHIFT_INFO         = "shift_info"
 	FLD_WORKLOCATION_INFO  = "worklocation_info"
 	FLD_PROJECT_INFO       = "project_info"
+	FLD_CLIENT_INFO        = "client_info"
 	FLD_LEAVE_INFO         = "leave_info"
+
+	FLD_FILTERED_COUNT = "filtered_count"
 )
 
 // HR Module table fields

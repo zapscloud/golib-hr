@@ -32,7 +32,7 @@ func (p *StaffMongoDBDao) InitializeDao(client utils.Map, businessId string) {
 // List - List all Collections
 func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
-	// var bFilter bool = false
+	var bFilter bool = false
 
 	log.Println("Begin - Find All Collection Dao", hr_common.DbHrStaffs)
 
@@ -50,7 +50,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
 		}
-		// bFilter = true
+		bFilter = true
 	}
 
 	// All Stages
@@ -81,18 +81,44 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		}
 	}
 
-	// // Add Count aggregate
-	// countStage := bson.M{hr_common.MONGODB_COUNT: "filtered_size"}
-	// stages = append(stages, countStage)
+	var filtercount int64 = 0
+	if bFilter {
+		// Prepare Filter Stages
+		filterStages := stages
 
-	// // Execute aggregate to find the count of filtered_size
-	// cursor, err := collection.Aggregate(ctx, stages)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if err = cursor.All(ctx, &results); err != nil {
-	// 	return nil, err
-	// }
+		// Add Count aggregate
+		countStage := bson.M{hr_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
+		filterStages = append(filterStages, countStage)
+
+		//log.Println("Aggregate for Count ====>", filterStages, stages)
+
+		// Execute aggregate to find the count of filtered_size
+		cursor, err := collection.Aggregate(ctx, filterStages)
+		if err != nil {
+			log.Println("Error in Aggregate", err)
+			return nil, err
+		}
+		var countResult []utils.Map
+		if err = cursor.All(ctx, &countResult); err != nil {
+			log.Println("Error in cursor.all", err)
+			return nil, err
+		}
+		if countResult == nil {
+			countResult = []utils.Map{}
+		}
+
+		//log.Println("Count Filter ===>", countResult)
+		if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
+			filtercount = int64(dataVal.(int32))
+		}
+		// log.Println("Count ===>", filtercount)
+
+	} else {
+		filtercount, err = collection.CountDocuments(ctx, filterdoc)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if skip > 0 {
 		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
@@ -104,10 +130,6 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		stages = append(stages, limitStage)
 	}
 
-	filtercount, err := collection.CountDocuments(ctx, filterdoc)
-	if err != nil {
-		return nil, err
-	}
 	cursor, err := collection.Aggregate(ctx, stages)
 	if err != nil {
 		return nil, err

@@ -326,10 +326,10 @@ func (p *ProjectMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 	// Lookup Stage for Token ========================================
 	lookupStage := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrProjects,
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrClients,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLIENT_ID,
 			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_CLIENT_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_PROJECT_INFO,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_CLIENT_INFO,
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
 				{hr_common.MONGODB_PROJECT: bson.M{
