@@ -108,13 +108,12 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 			log.Println("Error in cursor.all", err)
 			return nil, err
 		}
-		if countResult == nil {
-			countResult = []utils.Map{}
-		}
 
 		//log.Println("Count Filter ===>", countResult)
-		if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
-			filtercount = int64(dataVal.(int32))
+		if len(countResult) > 0 {
+			if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
+				filtercount = int64(dataVal.(int32))
+			}
 		}
 		// log.Println("Count ===>", filtercount)
 
@@ -146,7 +145,6 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 		return nil, err
 	}
 
-
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
@@ -158,7 +156,7 @@ func (p *LeaveMongoDBDao) List(filter string, sort string, skip int64, limit int
 	if err != nil {
 		return utils.Map{}, err
 	}
-	
+
 	if results == nil {
 		results = []utils.Map{}
 	}

@@ -103,15 +103,14 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 			log.Println("Error in cursor.all", err)
 			return nil, err
 		}
-		if countResult == nil {
-			countResult = []utils.Map{}
-		}
 
-		//log.Println("Count Filter ===>", countResult)
-		if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
-			filtercount = int64(dataVal.(int32))
+		//log.Println("Count Result ===>", countResult)
+		if len(countResult) > 0 {
+			if dataVal, dataOk := countResult[0][hr_common.FLD_FILTERED_COUNT]; dataOk {
+				filtercount = int64(dataVal.(int32))
+			}
 		}
-		// log.Println("Count ===>", filtercount)
+		//log.Println("Count ===>", filtercount)
 
 	} else {
 		filtercount, err = collection.CountDocuments(ctx, filterdoc)
