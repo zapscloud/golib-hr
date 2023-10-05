@@ -3,6 +3,7 @@ package mongodb_repository
 import (
 	"log"
 
+	"github.com/zapscloud/golib-business/business_common"
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/mongo_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
@@ -42,6 +43,8 @@ func (p *DashboardMongoDBDao) GetDashboardData() (utils.Map, error) {
 	shiftCount, _ := p.getShiftDetails()
 	staffTypeCount, _ := p.getStaffTypeDetails()
 	leaveTypeCount, _ := p.getLeaveTypeDetails()
+	work_locationCount, _ := p.getWorkLocationDetails()
+	rolesCount, _ := p.getroleDetails()
 
 	// 2. Count different leave types
 	//leaveCounts := make(map[string]int64)
@@ -69,8 +72,14 @@ func (p *DashboardMongoDBDao) GetDashboardData() (utils.Map, error) {
 		"staffType_details": utils.Map{
 			"total_staffType": staffTypeCount,
 		},
-		" leaveType_details": utils.Map{
-			"total_ leaveType": leaveTypeCount,
+		"leaveType_details": utils.Map{
+			"total_leaveType": leaveTypeCount,
+		},
+		"role_details": utils.Map{
+			"total_role": rolesCount,
+		},
+		"worklocation_details": utils.Map{
+			"total_worklocation": work_locationCount,
 		},
 	}
 
@@ -326,6 +335,48 @@ func (p *DashboardMongoDBDao) getLeaveTypeDetails() (int64, error) {
 
 	// Get the MongoDB collection
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaveTypes)
+	if err != nil {
+		return 0, err
+	}
+
+	// 1. Find Total number of Tokens
+	totalStaffCnt, err := collection.CountDocuments(ctx, filterdoc)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalStaffCnt, nil
+}
+func (p *DashboardMongoDBDao) getWorkLocationDetails() (int64, error) {
+	// Create a filter document
+	filterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
+		{Key: db_common.FLD_IS_DELETED, Value: false},
+	}
+
+	// Get the MongoDB collection
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrWorkLocations)
+	if err != nil {
+		return 0, err
+	}
+
+	// 1. Find Total number of Tokens
+	totalStaffCnt, err := collection.CountDocuments(ctx, filterdoc)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalStaffCnt, nil
+}
+func (p *DashboardMongoDBDao) getroleDetails() (int64, error) {
+	// Create a filter document
+	filterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
+		{Key: db_common.FLD_IS_DELETED, Value: false},
+	}
+
+	// Get the MongoDB collection
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, business_common.DbBusinessRoles)
 	if err != nil {
 		return 0, err
 	}

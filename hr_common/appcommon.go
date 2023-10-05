@@ -39,6 +39,7 @@ const (
 	MONGODB_DATETOSTRING = "$dateToString"
 	MONGODB_SET          = "$set"
 	MONGODB_SUM          = "$sum"
+	MONGODB_COUNT        = "$count"
 
 	MONGODB_STR_FROM         = "from"
 	MONGODB_STR_LOCALFIELD   = "localField"
@@ -54,6 +55,8 @@ const (
 	FLD_ROLE_INFO          = "role_info"
 	FLD_SHIFT_INFO         = "shift_info"
 	FLD_WORKLOCATION_INFO  = "worklocation_info"
+	FLD_PROJECT_INFO       = "project_info"
+	FLD_LEAVE_INFO         = "leave_info"
 )
 
 // HR Module table fields
@@ -76,7 +79,6 @@ const (
 	FLD_LEAVETYPE_ID   = "leave_type_id"
 	FLD_LEAVETYPE_NAME = "leave_type_name"
 	FLD_LEAVETYPE_DESC = "leave_type_desc"
-	FLD_LEAVE_INFO     = "leave_info"
 
 	// Department table fields
 	FLD_DEPARTMENT_ID   = "department_id"

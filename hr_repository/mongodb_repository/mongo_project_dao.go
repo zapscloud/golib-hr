@@ -40,17 +40,30 @@ func (p *ProjectMongoDBDao) List(filter string, sort string, skip int64, limit i
 
 	log.Println("Get Collection - Find All Collection Dao", filter, len(filter), sort, len(sort))
 
-	opts := options.Find()
-
 	filterdoc := bson.D{}
 	if len(filter) > 0 {
 		// filters, _ := strconv.Unquote(string(filter))
 		err = bson.UnmarshalExtJSON([]byte(filter), true, &filterdoc)
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
-			log.Println(filterdoc)
 		}
 	}
+	// All Stages
+	stages := []bson.M{}
+	// Remove unwanted fields
+	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
+	stages = append(stages, unsetStage)
+
+	// Add Lookup stages
+	stages = p.appendListLookups(stages)
+
+	// Match Stage
+	filterdoc = append(filterdoc,
+		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
+		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
+
+	matchStage := bson.M{hr_common.MONGODB_MATCH: filterdoc}
+	stages = append(stages, matchStage)
 
 	if len(sort) > 0 {
 		var sortdoc interface{}
@@ -58,26 +71,22 @@ func (p *ProjectMongoDBDao) List(filter string, sort string, skip int64, limit i
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			opts.SetSort(sortdoc)
+			sortStage := bson.M{hr_common.MONGODB_SORT: sortdoc}
+			stages = append(stages, sortStage)
 		}
 	}
 
 	if skip > 0 {
-		log.Println(filterdoc)
-		opts.SetSkip(skip)
+		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
+		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		log.Println(filterdoc)
-		opts.SetLimit(limit)
+		limitStage := bson.M{hr_common.MONGODB_LIMIT: limit}
+		stages = append(stages, limitStage)
 	}
 
-	filterdoc = append(filterdoc,
-		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
-
-	log.Println("Parameter values ", filterdoc, opts)
-	cursor, err := collection.Find(ctx, filterdoc, opts)
+	cursor, err := collection.Aggregate(ctx, stages)
 	if err != nil {
 		return nil, err
 	}
@@ -88,23 +97,11 @@ func (p *ProjectMongoDBDao) List(filter string, sort string, skip int64, limit i
 		return nil, err
 	}
 
-	//log.Println("End - Find All Collection Dao", results)
-
-	listdata := []utils.Map{}
-	for _, value := range results {
-		//log.Println("Item ", idx)
-		value = db_common.AmendFldsForGet(value)
-		listdata = append(listdata, value)
-	}
-
-	//log.Println("End - Find All Collection Dao", listdata)
-
 	log.Println("Parameter values ", filterdoc)
 	filtercount, err := collection.CountDocuments(ctx, filterdoc)
 	if err != nil {
 		return nil, err
 	}
-
 	basefilterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
@@ -113,13 +110,17 @@ func (p *ProjectMongoDBDao) List(filter string, sort string, skip int64, limit i
 		return nil, err
 	}
 
+	if results == nil {
+		results = []utils.Map{}
+	}
+
 	response := utils.Map{
 		db_common.LIST_SUMMARY: utils.Map{
 			db_common.LIST_TOTALSIZE:    totalcount,
 			db_common.LIST_FILTEREDSIZE: filtercount,
-			db_common.LIST_RESULTSIZE:   len(listdata),
+			db_common.LIST_RESULTSIZE:   len(results),
 		},
-		db_common.LIST_RESULT: listdata,
+		db_common.LIST_RESULT: results,
 	}
 
 	return response, nil
@@ -134,29 +135,46 @@ func (p *ProjectMongoDBDao) Get(projectId string) (utils.Map, error) {
 	log.Println("accountMongoDao::Get:: Begin ", projectId)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrProjects)
-	log.Println("Find:: Got Collection ")
 
-	filter := bson.D{
-		{Key: hr_common.FLD_PROJECT_ID, Value: projectId},
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID},
-		{Key: db_common.FLD_IS_DELETED, Value: false}}
-
-	log.Println("Get:: Got filter ", filter)
-
-	singleResult := collection.FindOne(ctx, filter)
-	if singleResult.Err() != nil {
-		log.Println("Get:: Record not found ", singleResult.Err())
-		return result, singleResult.Err()
-	}
-	singleResult.Decode(&result)
 	if err != nil {
+		return nil, err
+	}
+	log.Println("Find:: Got Collection ", collection)
+
+	stages := []bson.M{}
+
+	filter := bson.D{{Key: hr_common.FLD_PROJECT_ID, Value: projectId},
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
+
+	log.Println("GetDetails:: Got filter ", filter)
+
+	matchStage := bson.M{hr_common.MONGODB_MATCH: filter}
+	stages = append(stages, matchStage)
+
+	// Append Lookups
+	stages = p.appendListLookups(stages)
+	// Aggregate the stages
+	singleResult, err := collection.Aggregate(ctx, stages)
+	if err != nil {
+		log.Println("Get:: Error in aggregation: ", err)
+		return result, err
+	}
+
+	if !singleResult.Next(ctx) {
+		// No matching document found
+		log.Println("GetDetails:: Record not found")
+		return result, nil
+	}
+
+	if err := singleResult.Decode(&result); err != nil {
 		log.Println("Error in decode", err)
 		return result, err
 	}
+
 	// Remove fields from result
 	result = db_common.AmendFldsForGet(result)
 
-	log.Println("accountMongoDao::Get:: End Found a single document: \n", err)
+	log.Printf("ProjectMongoDBDao::Get:: End Found a single document: %+v\n", result)
 	return result, nil
 }
 
@@ -300,4 +318,31 @@ func (p *ProjectMongoDBDao) DeleteAll() (int64, error) {
 	}
 	log.Printf("accountMongoDao::DeleteAll - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
+}
+
+func (p *ProjectMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
+
+	// Lookup Stage for Token ========================================
+	lookupStage := bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrProjects,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLIENT_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_CLIENT_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_PROJECT_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID:        0,
+					db_common.FLD_IS_DELETED:        0,
+					db_common.FLD_CREATED_AT:        0,
+					db_common.FLD_UPDATED_AT:        0,
+					hr_common.FLD_BUSINESS_ID: 0}},
+			},
+		},
+	}
+
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
+	return stages
 }

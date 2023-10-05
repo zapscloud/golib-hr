@@ -32,6 +32,7 @@ func (p *StaffMongoDBDao) InitializeDao(client utils.Map, businessId string) {
 // List - List all Collections
 func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
+	// var bFilter bool = false
 
 	log.Println("Begin - Find All Collection Dao", hr_common.DbHrStaffs)
 
@@ -49,7 +50,9 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		if err != nil {
 			log.Println("Unmarshal Ext JSON error", err)
 		}
+		// bFilter = true
 	}
+
 	// All Stages
 	stages := []bson.M{}
 	// Remove unwanted fields
@@ -77,6 +80,19 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 			stages = append(stages, sortStage)
 		}
 	}
+
+	// // Add Count aggregate
+	// countStage := bson.M{hr_common.MONGODB_COUNT: "filtered_size"}
+	// stages = append(stages, countStage)
+
+	// // Execute aggregate to find the count of filtered_size
+	// cursor, err := collection.Aggregate(ctx, stages)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if err = cursor.All(ctx, &results); err != nil {
+	// 	return nil, err
+	// }
 
 	if skip > 0 {
 		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
