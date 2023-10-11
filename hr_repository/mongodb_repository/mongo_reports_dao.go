@@ -169,6 +169,50 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, sort string, ski
 	stages = append(stages, lookupStage3)
 	// ==========================================================
 
+	// Lookup Stage for project =========================
+	lookupStage4 := bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrProjects,
+			hr_common.MONGODB_STR_LOCALFIELD:   "docs." + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_PROJECT_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_PROJECT_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_PROJECT_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					db_common.FLD_UPDATED_AT:  0,
+					hr_common.FLD_BUSINESS_ID: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage4)
+	// ==========================================================
+
+	// Lookup Stage for client =========================
+	lookupStage5 := bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrClients,
+			hr_common.MONGODB_STR_LOCALFIELD:   "docs." + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_CLIENT_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_CLIENT_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_CLIENT_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					db_common.FLD_UPDATED_AT:  0,
+					hr_common.FLD_BUSINESS_ID: 0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage5)
+	// ==========================================================
+
 	if len(sort) > 0 {
 		var sortdoc interface{}
 		err = bson.UnmarshalExtJSON([]byte(sort), true, &sortdoc)
