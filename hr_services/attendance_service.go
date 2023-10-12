@@ -271,33 +271,14 @@ func (p *attendanceBaseService) ClockInMany(indata utils.Map) (utils.Map, error)
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Invalid StaffId", ErrorDetail: "No such StaffId found"}
 		return indata, err
 	}
-	// Get TimeZone
-	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
+
+	indata, err = p.convertStrToDateFormat(indata)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
 		return nil, err
 	}
 
-	// Convert Date_time string to Date Format
-	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
-	if err == nil {
-		// Load Location
-		loc, err := time.LoadLocation(timeZone)
-		if err != nil {
-			return nil, err
-		}
-
-		layout := hr_common.DATETIME_PARSE_FORMAT
-		//indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
-		indata[hr_common.FLD_DATETIME], err = time.ParseInLocation(layout, dateTime, loc)
-		if err != nil {
-			return nil, err
-		}
-	}
 	// Remove StaffId from indata
 	delete(indata, hr_common.FLD_STAFF_ID)
-	// Remove Timezone from indata
-	delete(indata, business_common.FLD_BUSINESS_TIMEZONE)
 
 	// Prepare ClockIn Data
 	var clockIn utils.Map = utils.Map{}
@@ -356,27 +337,12 @@ func (p *attendanceBaseService) ClockOutMany(indata utils.Map) (utils.Map, error
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Invalid AttendanceId", ErrorDetail: "No such AttendanceId found"}
 		return nil, err
 	}
-	// Get TimeZone
-	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
+
+	indata, err = p.convertStrToDateFormat(indata)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
 		return nil, err
 	}
-	// Convert Date_time string to Date Format
-	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
-	if err == nil {
-		// Load Location
-		loc, err := time.LoadLocation(timeZone)
-		if err != nil {
-			return nil, err
-		}
-		layout := hr_common.DATETIME_PARSE_FORMAT
-		//indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
-		indata[hr_common.FLD_DATETIME], err = time.ParseInLocation(layout, dateTime, loc)
-		if err != nil {
-			return nil, err
-		}
-	}
+
 	// Remove StaffId from indata
 	delete(indata, hr_common.FLD_ATTENDANCE_ID)
 
@@ -409,20 +375,20 @@ func (p *attendanceBaseService) Update(attendance_id string, indata utils.Map) (
 	delete(indata, hr_common.FLD_STAFF_ID)
 	delete(indata, hr_common.FLD_DATETIME)
 
-	// Convert clock_in->date_time string to Date Format
-	if dataVal, dataOk := indata[hr_common.FLD_CLOCK_IN]; dataOk {
-		_, err = p.convertStrToDateFormat(dataVal.(map[string]interface{}))
+	clockInData, err := utils.GetMemberData(indata, hr_common.FLD_CLOCK_IN)
+	if err == nil {
+		_, err = p.convertStrToDateFormat(clockInData.(map[string]interface{}))
 		if err != nil {
 			log.Println("Failed to Parse clock_in->date_time", err)
 			return nil, err
 		}
 	}
 
-	// Convert clock_in->date_time string to Date Format
-	if dataVal, dataOk := indata[hr_common.FLD_CLOCK_OUT]; dataOk {
-		_, err = p.convertStrToDateFormat(dataVal.(map[string]interface{}))
+	clockOutData, err := utils.GetMemberData(indata, hr_common.FLD_CLOCK_OUT)
+	if err == nil {
+		_, err = p.convertStrToDateFormat(clockOutData.(map[string]interface{}))
 		if err != nil {
-			log.Println("Failed to Parse clock_out->date_time", err)
+			log.Println("Failed to Parse clock_in->date_time", err)
 			return nil, err
 		}
 	}
@@ -469,14 +435,30 @@ func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error
 func (p *attendanceBaseService) convertStrToDateFormat(indata utils.Map) (utils.Map, error) {
 	var err error = nil
 
+	// Get TimeZone
+	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
+	if err != nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
+		return nil, err
+	}
+
 	// Convert Date_time string to Date Format
-	if dataVal, dataOk := indata[hr_common.FLD_DATETIME]; dataOk {
-		layout := hr_common.DATETIME_PARSE_FORMAT
-		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dataVal.(string))
+	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
+	if err == nil {
+		// Load Location
+		loc, err := time.LoadLocation(timeZone)
+		if err != nil {
+			return nil, err
+		}
+		//indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		indata[hr_common.FLD_DATETIME], err = time.ParseInLocation(time.DateTime, dateTime, loc)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	// Remove Timezone from indata
+	delete(indata, business_common.FLD_BUSINESS_TIMEZONE)
 
 	return indata, err
 }

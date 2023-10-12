@@ -3,7 +3,9 @@ package hr_services
 import (
 	"log"
 	"strings"
+	"time"
 
+	"github.com/zapscloud/golib-business/business_common"
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/db_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
@@ -151,12 +153,16 @@ func (p *leaveBaseService) Create(indata utils.Map) (utils.Map, error) {
 	_, err := p.daoLeave.Get(leaveId)
 	if err == nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
-		return indata, err
+		return utils.Map{}, err
+	}
+	indata, err = p.convertStrToDateTime(indata)
+	if err != nil {
+		return utils.Map{}, err
 	}
 
 	insertResult, err := p.daoLeave.Create(indata)
 	if err != nil {
-		return indata, err
+		return utils.Map{}, err
 	}
 	log.Println("UserService::Create - End ", insertResult)
 	return indata, err
@@ -176,6 +182,11 @@ func (p *leaveBaseService) Update(leaveId string, indata utils.Map) (utils.Map, 
 	delete(indata, hr_common.FLD_LEAVE_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 	delete(indata, hr_common.FLD_STAFF_ID)
+
+	indata, err = p.convertStrToDateTime(indata)
+	if err != nil {
+		return utils.Map{}, err
+	}
 
 	data, err = p.daoLeave.Update(leaveId, indata)
 	log.Println("AccountService::Update - End ")
@@ -211,4 +222,40 @@ func (p *leaveBaseService) errorReturn(err error) (LeaveService, error) {
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err
+}
+
+func (p *leaveBaseService) convertStrToDateTime(indata utils.Map) (utils.Map, error) {
+	// Get TimeZone
+	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
+	if err != nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
+		return nil, err
+	}
+	// Delete the timezone information
+	delete(indata, business_common.FLD_BUSINESS_TIMEZONE)
+
+	// Load Location
+	loc, err := time.LoadLocation(timeZone)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert Leave_From string to Date Format
+	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_LEAVE_FROM)
+	if err == nil {
+		indata[hr_common.FLD_LEAVE_FROM], err = time.ParseInLocation(time.DateTime, dateTime, loc)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Convert Leave_To string to Date Format
+	dateTime, err = utils.GetMemberDataStr(indata, hr_common.FLD_LEAVE_TO)
+	if err == nil {
+		indata[hr_common.FLD_LEAVE_TO], err = time.ParseInLocation(time.DateTime, dateTime, loc)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return indata, nil
 }
