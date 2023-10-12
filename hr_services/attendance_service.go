@@ -272,7 +272,7 @@ func (p *attendanceBaseService) ClockInMany(indata utils.Map) (utils.Map, error)
 		return indata, err
 	}
 	// Get TimeZone
-	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIME_ZONE)
+	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
 		return nil, err
@@ -297,7 +297,7 @@ func (p *attendanceBaseService) ClockInMany(indata utils.Map) (utils.Map, error)
 	// Remove StaffId from indata
 	delete(indata, hr_common.FLD_STAFF_ID)
 	// Remove Timezone from indata
-	delete(indata, business_common.FLD_BUSINESS_TIME_ZONE)
+	delete(indata, business_common.FLD_BUSINESS_TIMEZONE)
 
 	// Prepare ClockIn Data
 	var clockIn utils.Map = utils.Map{}
@@ -357,7 +357,7 @@ func (p *attendanceBaseService) ClockOutMany(indata utils.Map) (utils.Map, error
 		return nil, err
 	}
 	// Get TimeZone
-	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIME_ZONE)
+	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
 		return nil, err
