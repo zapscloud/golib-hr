@@ -146,6 +146,7 @@ const (
 
 const (
 	DATETIME_PARSE_FORMAT = "2006-01-02 03:04:05 PM"
+	DEF_TIME_ZONE         = "Asia/Calcutta"
 )
 
 func init() {

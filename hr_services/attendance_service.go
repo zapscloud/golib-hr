@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/zapscloud/golib-business/business_common"
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/db_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
@@ -270,17 +271,33 @@ func (p *attendanceBaseService) ClockInMany(indata utils.Map) (utils.Map, error)
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Invalid StaffId", ErrorDetail: "No such StaffId found"}
 		return indata, err
 	}
+	// Get TimeZone
+	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIME_ZONE)
+	if err != nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
+		return nil, err
+	}
+
 	// Convert Date_time string to Date Format
 	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
 	if err == nil {
+		// Load Location
+		loc, err := time.LoadLocation(timeZone)
+		if err != nil {
+			return nil, err
+		}
+
 		layout := hr_common.DATETIME_PARSE_FORMAT
-		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		//indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		indata[hr_common.FLD_DATETIME], err = time.ParseInLocation(layout, dateTime, loc)
 		if err != nil {
 			return nil, err
 		}
 	}
 	// Remove StaffId from indata
 	delete(indata, hr_common.FLD_STAFF_ID)
+	// Remove Timezone from indata
+	delete(indata, business_common.FLD_BUSINESS_TIME_ZONE)
 
 	// Prepare ClockIn Data
 	var clockIn utils.Map = utils.Map{}
@@ -337,13 +354,25 @@ func (p *attendanceBaseService) ClockOutMany(indata utils.Map) (utils.Map, error
 	data, err := p.daoAttendance.Get(attendanceId)
 	if err != nil {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Invalid AttendanceId", ErrorDetail: "No such AttendanceId found"}
-		return indata, err
+		return nil, err
+	}
+	// Get TimeZone
+	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIME_ZONE)
+	if err != nil {
+		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
+		return nil, err
 	}
 	// Convert Date_time string to Date Format
 	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_DATETIME)
 	if err == nil {
+		// Load Location
+		loc, err := time.LoadLocation(timeZone)
+		if err != nil {
+			return nil, err
+		}
 		layout := hr_common.DATETIME_PARSE_FORMAT
-		indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		//indata[hr_common.FLD_DATETIME], err = time.Parse(layout, dateTime)
+		indata[hr_common.FLD_DATETIME], err = time.ParseInLocation(layout, dateTime, loc)
 		if err != nil {
 			return nil, err
 		}

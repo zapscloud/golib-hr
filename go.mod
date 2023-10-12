@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/kr/pretty v0.3.1
-	github.com/zapscloud/golib-business v1.0.1-0.20231006124945-38d6772814f1
+	github.com/zapscloud/golib-business v1.0.1-0.20231012051404-c6d89ab67404
 	github.com/zapscloud/golib-dbutils v1.1.1-0.20231006124328-1a3949fdf394
 	github.com/zapscloud/golib-platform v1.0.1-0.20231006124812-4c90a6ccdbb1
 	github.com/zapscloud/golib-utils v1.0.1-0.20230830110037-ce8b7333310f
