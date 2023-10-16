@@ -7,6 +7,7 @@ import (
 	"github.com/zapscloud/golib-hr/hr_common"
 	"github.com/zapscloud/golib-hr/hr_repository"
 	"github.com/zapscloud/golib-platform/platform_repository"
+	"github.com/zapscloud/golib-platform/platform_services"
 	"github.com/zapscloud/golib-utils/utils"
 )
 
@@ -38,10 +39,17 @@ func init() {
 func NewDashboardService(props utils.Map) (DashboardService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
+	// Get Region and Tenant Database Information
+	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return nil, err
+	}
+
 	p := dashboardBaseService{} // Initialize p as a pointer to the struct
 
 	// Open Database Service
-	err := p.OpenDatabaseService(props)
+	err = p.OpenDatabaseService(props)
 	if err != nil {
 		log.Fatal(err)
 	}

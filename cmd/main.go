@@ -71,10 +71,11 @@ func main() {
 	// GetAttendance(rolesrv)
 	// FindAttendance(rolesrv)
 	//}
+	loc, _ := time.LoadLocation("Asia/Calcutta")
 	date_time := "2023-09-12 09:00:00 AM"
 	layout := "2006-01-02 03:04:05 PM"
-	dateResult, err := time.Parse(layout, date_time)
-	log.Println("DateTime ", dateResult, err)
+	dateResult, err := time.ParseInLocation(layout, date_time, loc)
+	log.Println("DateTime ", dateResult, dateResult.UTC(), err)
 
 }
 

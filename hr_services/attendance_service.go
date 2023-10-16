@@ -10,6 +10,7 @@ import (
 	"github.com/zapscloud/golib-hr/hr_common"
 	"github.com/zapscloud/golib-hr/hr_repository"
 	"github.com/zapscloud/golib-platform/platform_repository"
+	"github.com/zapscloud/golib-platform/platform_services"
 	"github.com/zapscloud/golib-utils/utils"
 )
 
@@ -58,10 +59,16 @@ func init() {
 func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	p := attendanceBaseService{}
+	// Get Region and Tenant Database Information
+	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return nil, err
+	}
 
+	p := attendanceBaseService{}
 	// Open Database Service
-	err := p.OpenDatabaseService(props)
+	err = p.OpenDatabaseService(props)
 	if err != nil {
 		return nil, err
 	}
