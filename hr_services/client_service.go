@@ -32,6 +32,7 @@ type ClientService interface {
 // ClientBaseService - Clients Service structure
 type clientBaseService struct {
 	db_utils.DatabaseService
+	dbRegion            db_utils.DatabaseService
 	daoClient           hr_repository.ClientDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	child               ClientService
@@ -45,10 +46,11 @@ func init() {
 func NewClientService(props utils.Map) (ClientService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("ClientService::Start ")
+
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
@@ -59,22 +61,26 @@ func NewClientService(props utils.Map) (ClientService, error) {
 		return nil, err
 	}
 
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Assign the BusinessId
 	p.businessID = businessId
 
 	// Instantiate other services
-	p.daoClient = hr_repository.NewClientDao(p.GetClient(), p.businessID)
+	p.daoClient = hr_repository.NewClientDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business id",
+			ErrorDetail: "Given business id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -85,6 +91,24 @@ func NewClientService(props utils.Map) (ClientService, error) {
 
 func (p *clientBaseService) EndService() {
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *clientBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // List - List All records

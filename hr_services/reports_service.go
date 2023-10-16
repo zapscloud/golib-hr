@@ -24,6 +24,7 @@ type ReportsService interface {
 
 type reportsBaseService struct {
 	db_utils.DatabaseService
+	dbRegion    db_utils.DatabaseService
 	daoReports  hr_repository.ReportsDao
 	daoBusiness platform_repository.BusinessDao
 
@@ -39,10 +40,11 @@ func init() {
 func NewReportsService(props utils.Map) (ReportsService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("ReportsService::Start ")
+
+	// Verify whether the business id data passed
+	businessID, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
@@ -51,14 +53,14 @@ func NewReportsService(props utils.Map) (ReportsService, error) {
 	// Open Database Service
 	err = p.OpenDatabaseService(props)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	log.Printf("ReportsService ")
 
-	// Verify whether the business id data passed
-	businessID, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Verify whether the User id data passed, this is optional parameter
@@ -69,12 +71,15 @@ func NewReportsService(props utils.Map) (ReportsService, error) {
 	p.staffID = staffID
 
 	// Instantiate other services
-	p.daoReports = hr_repository.NewReportsDao(p.GetClient(), p.businessID, p.staffID)
+	p.daoReports = hr_repository.NewReportsDao(p.dbRegion.GetClient(), p.businessID, p.staffID)
 	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoBusiness.Get(businessID)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business_id", ErrorDetail: "Given app_business_id does not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business_id",
+			ErrorDetail: "Given app_business_id does not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -86,6 +91,24 @@ func NewReportsService(props utils.Map) (ReportsService, error) {
 func (p *reportsBaseService) EndService() {
 	log.Printf("EndReportsMongoService ")
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *reportsBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetAttendanceSummary retrieves reports data

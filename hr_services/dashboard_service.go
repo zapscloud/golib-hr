@@ -24,12 +24,12 @@ type DashboardService interface {
 
 type dashboardBaseService struct {
 	db_utils.DatabaseService
+	dbRegion     db_utils.DatabaseService
 	daoDashboard hr_repository.DashboardDao
 	daoBusiness  platform_repository.BusinessDao
-	//daoStaff     hr_repository.StaffDao
-	child      DashboardService
-	businessID string
-	staffID    string // Changed "staffId" to "staffID" for consistency
+	child        DashboardService
+	businessID   string
+	staffID      string // Changed "staffId" to "staffID" for consistency
 }
 
 func init() {
@@ -39,43 +39,46 @@ func init() {
 func NewDashboardService(props utils.Map) (DashboardService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("DashboardService :: Start")
+
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
-	p := dashboardBaseService{} // Initialize p as a pointer to the struct
+	p := dashboardBaseService{}
 
 	// Open Database Service
 	err = p.OpenDatabaseService(props)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	log.Printf("DashboardService ")
 
-	// Verify whether the business id data passed
-	businessID, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Verify whether the User id data passed, this is optional parameter
 	staffID, _ := utils.GetMemberDataStr(props, hr_common.FLD_STAFF_ID)
 
 	// Assign the BusinessID
-	p.businessID = businessID
+	p.businessID = businessId
 	p.staffID = staffID
 
 	// Instantiate other services
-	p.daoDashboard = hr_repository.NewDashboardDao(p.GetClient(), p.businessID, p.staffID)
+	p.daoDashboard = hr_repository.NewDashboardDao(p.dbRegion.GetClient(), p.businessID, p.staffID)
 	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
-	//p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessID)
 
-	_, err = p.daoBusiness.Get(businessID)
+	_, err = p.daoBusiness.Get(businessId)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business_id", ErrorDetail: "Given app_business_id does not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business_id",
+			ErrorDetail: "Given app_business_id does not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -88,7 +91,7 @@ func NewDashboardService(props utils.Map) (DashboardService, error) {
 	// 	}
 	// }
 
-	p.child = &p // Assign the pointer to itself
+	p.child = &p
 
 	return &p, err
 }
@@ -96,6 +99,24 @@ func NewDashboardService(props utils.Map) (DashboardService, error) {
 func (p *dashboardBaseService) EndService() {
 	log.Printf("EndDashboardMongoService ")
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *dashboardBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetDashboardData retrieves dashboard data

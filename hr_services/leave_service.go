@@ -34,6 +34,7 @@ type LeaveService interface {
 // leaveBaseService - Accounts Service structure
 type leaveBaseService struct {
 	db_utils.DatabaseService
+	dbRegion            db_utils.DatabaseService
 	daoLeave            hr_repository.LeaveDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	daoStaff            hr_repository.StaffDao
@@ -50,10 +51,11 @@ func init() {
 func NewLeaveService(props utils.Map) (LeaveService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("LeaveService::Start")
+
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
@@ -65,36 +67,42 @@ func NewLeaveService(props utils.Map) (LeaveService, error) {
 		return nil, err
 	}
 
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
+
 	// Verify whether the User id data passed, this is optional parameter
 	staffId, _ := utils.GetMemberDataStr(props, hr_common.FLD_STAFF_ID)
-	// if err != nil {
-	// 	return p.errorReturn(err)
-	// }
 
 	// Assign the BusinessId & StaffId
 	p.businessId = businessId
 	p.staffId = staffId
 
 	// Instantiate other services
-	p.daoLeave = hr_repository.NewLeaveDao(p.GetClient(), p.businessId, p.staffId)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
-	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessId)
+	p.daoLeave = hr_repository.NewLeaveDao(p.dbRegion.GetClient(), p.businessId, p.staffId)
+	p.daoStaff = hr_repository.NewStaffDao(p.dbRegion.GetClient(), p.businessId)
 
 	_, err = p.daoPlatformBusiness.Get(p.businessId)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business id",
+			ErrorDetail: "Given business id is not exist"}
 		return p.errorReturn(err)
 	}
+
 	// Verify the Staff Exist
 	if len(staffId) > 0 {
 		_, err = p.daoStaff.Get(staffId)
 		if err != nil {
-			err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
+			err := &utils.AppError{
+				ErrorCode:   funcode + "01",
+				ErrorMsg:    "Invalid StaffId",
+				ErrorDetail: "Given StaffId is not exist"}
 			return p.errorReturn(err)
 		}
 	}
@@ -106,6 +114,24 @@ func NewLeaveService(props utils.Map) (LeaveService, error) {
 
 func (p *leaveBaseService) EndService() {
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *leaveBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // List - List All records

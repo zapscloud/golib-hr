@@ -33,6 +33,7 @@ type DepartmentService interface {
 
 type departmentBaseService struct {
 	db_utils.DatabaseService
+	dbRegion      db_utils.DatabaseService
 	daoDepartment hr_repository.DepartmentDao
 	daoBusiness   platform_repository.BusinessDao
 	child         DepartmentService
@@ -46,24 +47,24 @@ func init() {
 func NewDepartmentService(props utils.Map) (DepartmentService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("DepartmentService::Start ")
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
 	p := departmentBaseService{}
-
 	err = p.OpenDatabaseService(props)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	log.Printf("DepartmentService ")
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Assign the BusinessId
@@ -72,7 +73,10 @@ func NewDepartmentService(props utils.Map) (DepartmentService, error) {
 
 	_, err = p.daoBusiness.Get(businessId)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business_id", ErrorDetail: "Given app_business_id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business_id",
+			ErrorDetail: "Given app_business_id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -84,12 +88,30 @@ func NewDepartmentService(props utils.Map) (DepartmentService, error) {
 func (p *departmentBaseService) EndService() {
 	log.Printf("EndDepartmentMongoService ")
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
 }
 
 func (p *departmentBaseService) initializeService() {
 	log.Printf("DepartmentMongoService:: GetBusinessDao ")
-	p.daoDepartment = hr_repository.NewDepartmentDao(p.GetClient(), p.businessID)
+	p.daoDepartment = hr_repository.NewDepartmentDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
+}
+
+func (p *departmentBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // List - List All records

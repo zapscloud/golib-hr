@@ -32,6 +32,7 @@ type HolidayService interface {
 // holidayBaseService - Accounts Service structure
 type holidayBaseService struct {
 	db_utils.DatabaseService
+	dbRegion            db_utils.DatabaseService
 	daoHoliday          hr_repository.HolidayDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	child               HolidayService
@@ -45,10 +46,11 @@ func init() {
 func NewHolidayService(props utils.Map) (HolidayService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("HolidayService::Start")
+
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
@@ -60,22 +62,26 @@ func NewHolidayService(props utils.Map) (HolidayService, error) {
 		return nil, err
 	}
 
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Assign the BusinessId
 	p.businessID = businessId
 
 	// Instantiate other services
-	p.daoHoliday = hr_repository.NewHolidayDao(p.GetClient(), p.businessID)
+	p.daoHoliday = hr_repository.NewHolidayDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business id",
+			ErrorDetail: "Given business id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -86,6 +92,24 @@ func NewHolidayService(props utils.Map) (HolidayService, error) {
 
 func (p *holidayBaseService) EndService() {
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *holidayBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // List - List All records

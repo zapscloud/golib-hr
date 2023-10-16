@@ -29,9 +29,10 @@ type ProjectService interface {
 	EndService()
 }
 
-// ProjectBaseService - Projects Service structure
-type ProjectBaseService struct {
+// projectBaseService - Projects Service structure
+type projectBaseService struct {
 	db_utils.DatabaseService
+	dbRegion            db_utils.DatabaseService
 	daoProject          hr_repository.ProjectDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	child               ProjectService
@@ -45,14 +46,15 @@ func init() {
 func NewProjectService(props utils.Map) (ProjectService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("ProjectService::Start ")
+
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
-	p := ProjectBaseService{}
+	p := projectBaseService{}
 
 	// Open Database Service
 	err = p.OpenDatabaseService(props)
@@ -60,22 +62,26 @@ func NewProjectService(props utils.Map) (ProjectService, error) {
 		return nil, err
 	}
 
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Assign the BusinessId
 	p.businessID = businessId
 
 	// Instantiate other services
-	p.daoProject = hr_repository.NewProjectDao(p.GetClient(), p.businessID)
+	p.daoProject = hr_repository.NewProjectDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business id",
+			ErrorDetail: "Given business id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -84,12 +90,30 @@ func NewProjectService(props utils.Map) (ProjectService, error) {
 	return &p, nil
 }
 
-func (p *ProjectBaseService) EndService() {
+func (p *projectBaseService) EndService() {
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *projectBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // List - List All records
-func (p *ProjectBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *projectBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
 	log.Println("ProjectService::FindAll - Begin")
 
@@ -104,7 +128,7 @@ func (p *ProjectBaseService) List(filter string, sort string, skip int64, limit 
 }
 
 // FindByCode - Find By Code
-func (p *ProjectBaseService) Get(projectId string) (utils.Map, error) {
+func (p *projectBaseService) Get(projectId string) (utils.Map, error) {
 	log.Printf("ProjectService::FindByCode::  Begin %v", projectId)
 
 	data, err := p.daoProject.Get(projectId)
@@ -112,7 +136,7 @@ func (p *ProjectBaseService) Get(projectId string) (utils.Map, error) {
 	return data, err
 }
 
-func (p *ProjectBaseService) Find(filter string) (utils.Map, error) {
+func (p *projectBaseService) Find(filter string) (utils.Map, error) {
 	log.Println("ProjectService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoProject.Find(filter)
@@ -120,7 +144,7 @@ func (p *ProjectBaseService) Find(filter string) (utils.Map, error) {
 	return data, err
 }
 
-func (p *ProjectBaseService) Create(indata utils.Map) (utils.Map, error) {
+func (p *projectBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("UserService::Create - Begin")
 
@@ -152,7 +176,7 @@ func (p *ProjectBaseService) Create(indata utils.Map) (utils.Map, error) {
 }
 
 // Update - Update Service
-func (p *ProjectBaseService) Update(projectId string, indata utils.Map) (utils.Map, error) {
+func (p *projectBaseService) Update(projectId string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("ProjectService::Update - Begin")
 
@@ -171,7 +195,7 @@ func (p *ProjectBaseService) Update(projectId string, indata utils.Map) (utils.M
 }
 
 // Delete - Delete Service
-func (p *ProjectBaseService) Delete(projectId string, delete_permanent bool) error {
+func (p *projectBaseService) Delete(projectId string, delete_permanent bool) error {
 
 	log.Println("ProjectService::Delete - Begin", projectId)
 
@@ -195,7 +219,7 @@ func (p *ProjectBaseService) Delete(projectId string, delete_permanent bool) err
 	return nil
 }
 
-func (p *ProjectBaseService) errorReturn(err error) (ProjectService, error) {
+func (p *projectBaseService) errorReturn(err error) (ProjectService, error) {
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err

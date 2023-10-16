@@ -40,9 +40,10 @@ type AttendanceService interface {
 	EndService()
 }
 
-// LoyaltyCardService - Attendances Service structure
+// AttendanceBaseService - Attendances Service structure
 type attendanceBaseService struct {
 	db_utils.DatabaseService
+	dbRegion            db_utils.DatabaseService
 	daoAttendance       hr_repository.AttendanceDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	daoStaff            hr_repository.StaffDao
@@ -59,10 +60,10 @@ func init() {
 func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	log.Printf("AttendanceSerivce::Start ")
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
@@ -73,29 +74,32 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 		return nil, err
 	}
 
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Verify whether the User id data passed, this is optional parameter
 	staffId, _ := utils.GetMemberDataStr(props, hr_common.FLD_STAFF_ID)
-	// if err != nil {
-	// 	return p.errorReturn(err)
-	// }
 
 	// Assign the BusinessId & StaffId
 	p.businessId = businessId
 	p.staffId = staffId
 
-	p.daoAttendance = hr_repository.NewAttendanceDao(p.GetClient(), p.businessId, p.staffId)
+	// Initialize services
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
-	p.daoStaff = hr_repository.NewStaffDao(p.GetClient(), p.businessId)
+	p.daoAttendance = hr_repository.NewAttendanceDao(p.dbRegion.GetClient(), p.businessId, p.staffId)
+	p.daoStaff = hr_repository.NewStaffDao(p.dbRegion.GetClient(), p.businessId)
 
+	// Verify the BusinessId is exist
 	_, err = p.daoPlatformBusiness.Get(p.businessId)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business id",
+			ErrorDetail: "Given business id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -103,7 +107,10 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 	if len(staffId) > 0 {
 		_, err = p.daoStaff.Get(staffId)
 		if err != nil {
-			err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid StaffId", ErrorDetail: "Given StaffId is not exist"}
+			err := &utils.AppError{
+				ErrorCode:   funcode + "01",
+				ErrorMsg:    "Invalid StaffId",
+				ErrorDetail: "Given StaffId is not exist"}
 			return p.errorReturn(err)
 		}
 	}
@@ -115,6 +122,24 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 
 func (p *attendanceBaseService) EndService() {
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *attendanceBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ************************

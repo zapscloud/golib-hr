@@ -31,8 +31,9 @@ type LeaveTypeService interface {
 	EndService()
 }
 
-type LeaveTypeBaseService struct {
+type leaveTypeBaseService struct {
 	db_utils.DatabaseService
+	dbRegion     db_utils.DatabaseService
 	daoLeaveType hr_repository.LeaveTypeDao
 	daoBusiness  platform_repository.BusinessDao
 	child        LeaveTypeService
@@ -46,24 +47,26 @@ func init() {
 func NewLeaveTypeService(props utils.Map) (LeaveTypeService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
-	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
-		return nil, err
-	}
+	log.Printf("LeaveTypeService::Start ")
 
-	p := LeaveTypeBaseService{}
-
-	err = p.OpenDatabaseService(props)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("LeaveTypeService ")
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		return p.errorReturn(err)
+		return nil, err
+	}
+
+	p := leaveTypeBaseService{}
+	// Open Database Service
+	err = p.OpenDatabaseService(props)
+	if err != nil {
+		return nil, err
+	}
+
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
+	if err != nil {
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Assign the BusinessId
@@ -72,7 +75,10 @@ func NewLeaveTypeService(props utils.Map) (LeaveTypeService, error) {
 
 	_, err = p.daoBusiness.Get(businessId)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business_id", ErrorDetail: "Given app_business_id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business_id",
+			ErrorDetail: "Given app_business_id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -81,19 +87,37 @@ func NewLeaveTypeService(props utils.Map) (LeaveTypeService, error) {
 	return &p, err
 }
 
-func (p *LeaveTypeBaseService) EndService() {
+func (p *leaveTypeBaseService) EndService() {
 	log.Printf("EndLeaveTypeMongoService ")
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
 }
 
-func (p *LeaveTypeBaseService) initializeService() {
+func (p *leaveTypeBaseService) initializeService() {
 	log.Printf("LeaveTypeMongoService:: GetBusinessDao ")
-	p.daoLeaveType = hr_repository.NewLeaveTypeDao(p.GetClient(), p.businessID)
+	p.daoLeaveType = hr_repository.NewLeaveTypeDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
 }
 
+func (p *leaveTypeBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // List - List All records
-func (p *LeaveTypeBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *leaveTypeBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
 	log.Println("LeaveTypeService::FindAll - Begin")
 
@@ -108,7 +132,7 @@ func (p *LeaveTypeBaseService) List(filter string, sort string, skip int64, limi
 }
 
 // FindByCode - Find By Code
-func (p *LeaveTypeBaseService) GetDeptCodeDetails(LeaveType_code string) (utils.Map, error) {
+func (p *leaveTypeBaseService) GetDeptCodeDetails(LeaveType_code string) (utils.Map, error) {
 	log.Printf("LeaveTypeService::FindByCode::  Begin %v", LeaveType_code)
 
 	data, err := p.daoLeaveType.GetDeptCodeDetails(LeaveType_code)
@@ -117,7 +141,7 @@ func (p *LeaveTypeBaseService) GetDeptCodeDetails(LeaveType_code string) (utils.
 }
 
 // FindByCode - Find By Code
-func (p *LeaveTypeBaseService) Get(LeaveType_id string) (utils.Map, error) {
+func (p *leaveTypeBaseService) Get(LeaveType_id string) (utils.Map, error) {
 	log.Printf("LeaveTypeService::FindByCode::  Begin %v", LeaveType_id)
 
 	data, err := p.daoLeaveType.Get(LeaveType_id)
@@ -125,7 +149,7 @@ func (p *LeaveTypeBaseService) Get(LeaveType_id string) (utils.Map, error) {
 	return data, err
 }
 
-func (p *LeaveTypeBaseService) Find(filter string) (utils.Map, error) {
+func (p *leaveTypeBaseService) Find(filter string) (utils.Map, error) {
 	log.Println("LeaveTypeService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoLeaveType.Find(filter)
@@ -133,7 +157,7 @@ func (p *LeaveTypeBaseService) Find(filter string) (utils.Map, error) {
 	return data, err
 }
 
-func (p *LeaveTypeBaseService) Create(indata utils.Map) (utils.Map, error) {
+func (p *leaveTypeBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("UserService::Create - Begin")
 	var deptId string
@@ -165,7 +189,7 @@ func (p *LeaveTypeBaseService) Create(indata utils.Map) (utils.Map, error) {
 }
 
 // Update - Update Service
-func (p *LeaveTypeBaseService) Update(LeaveType_id string, indata utils.Map) (utils.Map, error) {
+func (p *leaveTypeBaseService) Update(LeaveType_id string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("LeaveTypeService::Update - Begin")
 
@@ -183,7 +207,7 @@ func (p *LeaveTypeBaseService) Update(LeaveType_id string, indata utils.Map) (ut
 }
 
 // Delete - Delete Service
-func (p *LeaveTypeBaseService) Delete(LeaveType_id string, delete_permanent bool) error {
+func (p *leaveTypeBaseService) Delete(LeaveType_id string, delete_permanent bool) error {
 
 	log.Println("LeaveTypeService::Delete - Begin", LeaveType_id, delete_permanent)
 
@@ -207,7 +231,7 @@ func (p *LeaveTypeBaseService) Delete(LeaveType_id string, delete_permanent bool
 	return nil
 }
 
-func (p *LeaveTypeBaseService) errorReturn(err error) (LeaveTypeService, error) {
+func (p *leaveTypeBaseService) errorReturn(err error) (LeaveTypeService, error) {
 	// Close the Database Connection
 	p.CloseDatabaseService()
 	return nil, err

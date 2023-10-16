@@ -29,9 +29,10 @@ type DesignationService interface {
 	EndService()
 }
 
-// LoyaltyCardService - Designations Service structure
+// DesignationBaseService - Designations Service structure
 type designationBaseService struct {
 	db_utils.DatabaseService
+	dbRegion            db_utils.DatabaseService
 	daoDesignation      hr_repository.DesignationDao
 	daoPlatformBusiness platform_repository.BusinessDao
 	child               DesignationService
@@ -44,12 +45,11 @@ func init() {
 
 func NewDesignationService(props utils.Map) (DesignationService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
-	log.Printf("DesignationService ")
+	log.Printf("DesignationService::Start")
 
-	// Get Region and Tenant Database Information
-	props, err := platform_services.GetRegionAndTenantDBInfo(props)
+	// Verify whether the business id data passed
+	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
 	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
 		return nil, err
 	}
 
@@ -61,22 +61,26 @@ func NewDesignationService(props utils.Map) (DesignationService, error) {
 		return nil, err
 	}
 
-	// Verify whether the business id data passed
-	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
+	// Open RegionDB Service
+	err = p.openRegionDatabaseService(props)
 	if err != nil {
-		return p.errorReturn(err)
+		p.CloseDatabaseService()
+		return nil, err
 	}
 
 	// Assign the BusinessId
 	p.businessID = businessId
 
 	// Instantiate other services
-	p.daoDesignation = hr_repository.NewDesignationDao(p.GetClient(), p.businessID)
+	p.daoDesignation = hr_repository.NewDesignationDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
-		err := &utils.AppError{ErrorCode: funcode + "01", ErrorMsg: "Invalid business id", ErrorDetail: "Given business id is not exist"}
+		err := &utils.AppError{
+			ErrorCode:   funcode + "01",
+			ErrorMsg:    "Invalid business id",
+			ErrorDetail: "Given business id is not exist"}
 		return p.errorReturn(err)
 	}
 
@@ -87,6 +91,24 @@ func NewDesignationService(props utils.Map) (DesignationService, error) {
 
 func (p *designationBaseService) EndService() {
 	p.CloseDatabaseService()
+	p.dbRegion.CloseDatabaseService()
+}
+
+func (p *designationBaseService) openRegionDatabaseService(props utils.Map) error {
+
+	// Get Region and Tenant Database Information
+	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
+	if err != nil {
+		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
+		return err
+	}
+
+	err = p.dbRegion.OpenDatabaseService(propsRegion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ************************
