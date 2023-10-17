@@ -214,6 +214,6 @@ func (p *departmentBaseService) Delete(department_id string, delete_permanent bo
 
 func (p *departmentBaseService) errorReturn(err error) (DepartmentService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

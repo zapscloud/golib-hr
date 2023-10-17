@@ -204,6 +204,6 @@ func (p *holidayBaseService) Delete(holiday_id string, delete_permanent bool) er
 
 func (p *holidayBaseService) errorReturn(err error) (HolidayService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

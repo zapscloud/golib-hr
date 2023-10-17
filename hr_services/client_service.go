@@ -203,6 +203,6 @@ func (p *clientBaseService) Delete(clientId string, delete_permanent bool) error
 
 func (p *clientBaseService) errorReturn(err error) (ClientService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

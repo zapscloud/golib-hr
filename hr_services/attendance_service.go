@@ -443,7 +443,7 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 
 func (p *attendanceBaseService) errorReturn(err error) (AttendanceService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }
 

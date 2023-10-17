@@ -237,7 +237,7 @@ func (p *leaveBaseService) Delete(leaveId string, delete_permanent bool) error {
 
 func (p *leaveBaseService) errorReturn(err error) (LeaveService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }
 

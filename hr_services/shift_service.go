@@ -205,6 +205,6 @@ func (p *shiftBaseService) Delete(shiftId string, delete_permanent bool) error {
 
 func (p *shiftBaseService) errorReturn(err error) (ShiftService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

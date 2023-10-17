@@ -204,6 +204,6 @@ func (p *projectBaseService) Delete(projectId string, delete_permanent bool) err
 
 func (p *projectBaseService) errorReturn(err error) (ProjectService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

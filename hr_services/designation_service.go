@@ -223,6 +223,6 @@ func (p *designationBaseService) Delete(designation_id string, delete_permanent 
 
 func (p *designationBaseService) errorReturn(err error) (DesignationService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

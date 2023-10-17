@@ -111,6 +111,6 @@ func (p *reportsBaseService) GetAttendanceSummary(filter string, sort string, sk
 // errorReturn handles error and closes the database connection
 func (p *reportsBaseService) errorReturn(err error) (ReportsService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

@@ -203,6 +203,6 @@ func (p *positionBaseService) Delete(position_id string, delete_permanent bool) 
 
 func (p *positionBaseService) errorReturn(err error) (PositionService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

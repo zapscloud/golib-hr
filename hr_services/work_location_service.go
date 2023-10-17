@@ -204,6 +204,6 @@ func (p *workLocationBaseService) Delete(workLocId string, delete_permanent bool
 
 func (p *workLocationBaseService) errorReturn(err error) (WorkLocationService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

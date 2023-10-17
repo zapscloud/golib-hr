@@ -216,6 +216,6 @@ func (p *leaveTypeBaseService) Delete(LeaveType_id string, delete_permanent bool
 
 func (p *leaveTypeBaseService) errorReturn(err error) (LeaveTypeService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }

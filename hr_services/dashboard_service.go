@@ -119,6 +119,6 @@ func (p *dashboardBaseService) GetDashboardData() (utils.Map, error) {
 // errorReturn handles error and closes the database connection
 func (p *dashboardBaseService) errorReturn(err error) (DashboardService, error) {
 	// Close the Database Connection
-	p.CloseDatabaseService()
+	p.EndService()
 	return nil, err
 }
