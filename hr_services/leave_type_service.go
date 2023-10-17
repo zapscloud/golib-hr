@@ -63,7 +63,7 @@ func NewLeaveTypeService(props utils.Map) (LeaveTypeService, error) {
 	}
 
 	// Open RegionDB Service
-	err = p.openRegionDatabaseService(props)
+	p.dbRegion, err = platform_services.OpenRegionDatabaseService(props)
 	if err != nil {
 		p.CloseDatabaseService()
 		return nil, err
@@ -97,23 +97,6 @@ func (p *leaveTypeBaseService) initializeService() {
 	log.Printf("LeaveTypeMongoService:: GetBusinessDao ")
 	p.daoLeaveType = hr_repository.NewLeaveTypeDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
-}
-
-func (p *leaveTypeBaseService) openRegionDatabaseService(props utils.Map) error {
-
-	// Get Region and Tenant Database Information
-	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
-	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
-		return err
-	}
-
-	err = p.dbRegion.OpenDatabaseService(propsRegion)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // List - List All records

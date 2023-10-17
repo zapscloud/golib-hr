@@ -63,7 +63,7 @@ func NewProjectService(props utils.Map) (ProjectService, error) {
 	}
 
 	// Open RegionDB Service
-	err = p.openRegionDatabaseService(props)
+	p.dbRegion, err = platform_services.OpenRegionDatabaseService(props)
 	if err != nil {
 		p.CloseDatabaseService()
 		return nil, err
@@ -93,23 +93,6 @@ func NewProjectService(props utils.Map) (ProjectService, error) {
 func (p *projectBaseService) EndService() {
 	p.CloseDatabaseService()
 	p.dbRegion.CloseDatabaseService()
-}
-
-func (p *projectBaseService) openRegionDatabaseService(props utils.Map) error {
-
-	// Get Region and Tenant Database Information
-	propsRegion, err := platform_services.GetRegionAndTenantDBInfo(props)
-	if err != nil {
-		log.Println("GetRegionAndTenantDBInfo() ERROR", err)
-		return err
-	}
-
-	err = p.dbRegion.OpenDatabaseService(propsRegion)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // List - List All records
