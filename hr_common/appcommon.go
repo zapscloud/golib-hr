@@ -16,12 +16,13 @@ const (
 	DbHrDepartments   = DbPrefix + "hr_departments"
 	DbHrDesignations  = DbPrefix + "hr_designations"
 	DbHrPositions     = DbPrefix + "hr_positions"
+	DbHrPositionTypes = DbPrefix + "hr_position_types"
 	DbHrAttendances   = DbPrefix + "hr_attendances"
 	DbHrLeaves        = DbPrefix + "hr_leaves"
+	DbHrLeaveTypes    = DbPrefix + "hr_leave_types"
 	DbHrHolidays      = DbPrefix + "hr_holidays"
 	DbHrShifts        = DbPrefix + "hr_shifts"
 	DbHrWorkLocations = DbPrefix + "hr_work_locations"
-	DbHrLeaveTypes    = DbPrefix + "hr_leave_types"
 	DbHrClients       = DbPrefix + "hr_clients"
 	DbHrProjects      = DbPrefix + "hr_projects"
 )
@@ -103,14 +104,16 @@ const (
 	FLD_POSITION_ID   = "position_id"
 	FLD_POSITION_NAME = "position_name"
 
+	FLD_POSITION_TYPE_ID   = "position_type_id"
+	FLD_POSITION_TYPE_NAME = "position_type_name"
+
 	// Attendance Table
-	FLD_ATTENDANCE_ID   = "attendance_id" // Auto generated
-	FLD_ATTENDANCE_TYPE = "type"          // Possible values "IN", "OUT"
-	FLD_DATETIME        = "date_time"
-	FLD_LATITUDE        = "latitude"
-	FLD_LONGITUDE       = "longitude"
-	FLD_CLOCK_IN        = "clock_in"
-	FLD_CLOCK_OUT       = "clock_out"
+	FLD_ATTENDANCE_ID = "attendance_id" // Auto generated
+	FLD_DATETIME      = "date_time"
+	FLD_LATITUDE      = "latitude"
+	FLD_LONGITUDE     = "longitude"
+	FLD_CLOCK_IN      = "clock_in"
+	FLD_CLOCK_OUT     = "clock_out"
 
 	// Leave Table
 	FLD_LEAVE_ID          = "leave_id"
