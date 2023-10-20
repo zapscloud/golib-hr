@@ -11,6 +11,7 @@ import (
 	"github.com/zapscloud/golib-platform/platform_repository"
 	"github.com/zapscloud/golib-platform/platform_services"
 	"github.com/zapscloud/golib-utils/utils"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // ReportsService - Reports Service structure
@@ -128,10 +129,15 @@ func (p *reportsBaseService) lookupAppuser(response utils.Map) {
 	dataStaff, err := utils.GetMemberData(response, db_common.LIST_RESULT)
 
 	if err == nil {
-		staffs := dataStaff.([]utils.Map)
-		for _, staff := range staffs {
-			p.mergeUserInfo(staff)
-			//log.Println(staff)
+		recs := dataStaff.([]utils.Map)
+		for _, rec := range recs {
+			data, err := utils.GetMemberData(rec, hr_common.FLD_GROUP_DOCS)
+			if err == nil {
+				docs := []interface{}(data.(primitive.A))
+				for _, doc := range docs {
+					p.mergeUserInfo(doc.(utils.Map))
+				}
+			}
 		}
 	}
 }
@@ -139,6 +145,7 @@ func (p *reportsBaseService) lookupAppuser(response utils.Map) {
 func (p *reportsBaseService) mergeUserInfo(staffInfo utils.Map) {
 
 	staffId, _ := utils.GetMemberDataStr(staffInfo, hr_common.FLD_STAFF_ID)
+
 	staffData, err := p.daoPlatformAppUser.Get(staffId)
 	if err == nil {
 		// Delete unwanted fields

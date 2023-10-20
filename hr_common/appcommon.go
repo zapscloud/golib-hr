@@ -28,6 +28,7 @@ const (
 )
 
 const (
+	MONGODB_ROOT         = "$$ROOT"
 	MONGODB_MATCH        = "$match"
 	MONGODB_LOOKUP       = "$lookup"
 	MONGODB_GROUP        = "$group"
@@ -62,6 +63,7 @@ const (
 	FLD_LEAVE_INFO         = "leave_info"
 
 	FLD_FILTERED_COUNT = "filtered_count"
+	FLD_GROUP_DOCS     = "docs"
 )
 
 // HR Module table fields
