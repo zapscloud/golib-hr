@@ -55,6 +55,7 @@ const (
 const (
 	FLD_BUSINESS_USER_INFO = "business_user_info"
 	FLD_APP_USER_INFO      = "app_user_info"
+	FLD_STAFF_INFO         = "staff_info"
 	FLD_ROLE_INFO          = "role_info"
 	FLD_SHIFT_INFO         = "shift_info"
 	FLD_WORKLOCATION_INFO  = "worklocation_info"
@@ -74,7 +75,6 @@ const (
 	// Staff table fields
 	FLD_STAFF_ID            = "staff_id"
 	FLD_STAFF_DATA          = "staff_data"
-	FLD_STAFF_INFO          = "staff_info"
 	FLD_STAFF_LAST_CLOCK_IN = "last_clock_in_attendance_id"
 
 	// StaffType table fields

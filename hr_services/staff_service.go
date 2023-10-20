@@ -231,6 +231,6 @@ func (p *staffBaseService) mergeUserInfo(staffInfo utils.Map) {
 		delete(staffData, platform_common.FLD_APP_USER_ID)
 
 		// Make it as Array for backward compatible, since all MongoDB Lookups data returned as array
-		staffInfo[hr_common.FLD_APP_USER_INFO] = []utils.Map{staffData}
+		staffInfo[hr_common.FLD_STAFF_INFO] = []utils.Map{staffData}
 	}
 }
