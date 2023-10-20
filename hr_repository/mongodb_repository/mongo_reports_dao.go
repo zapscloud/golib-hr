@@ -96,22 +96,18 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, aggr string, sor
 	// 	},
 	// }
 
-	// Add Group stage ================================
-	groupbyStage := bson.M{
-		hr_common.MONGODB_GROUP: bson.M{
-			db_common.FLD_DEFAULT_ID: bson.M{
-				hr_common.FLD_STAFF_ID: "$" + hr_common.FLD_STAFF_ID,
-				"for_date": bson.M{
-					hr_common.MONGODB_DATETOSTRING: bson.M{
-						hr_common.MONGODB_STR_FORMAT: "%Y-%m-%d", "date": "$" + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_DATETIME}},
+	if !utils.IsEmpty(aggr) {
+		// Add Group stage ================================
+		groupbyStage := bson.M{
+			hr_common.MONGODB_GROUP: bson.M{
+				db_common.FLD_DEFAULT_ID: aggrdoc,
+				"docs":                   bson.M{hr_common.MONGODB_PUSH: "$$ROOT"},
 			},
-			"docs": bson.M{hr_common.MONGODB_PUSH: "$$ROOT"},
-		},
+		}
+		// Add it to Aggregate Stage
+		stages = append(stages, groupbyStage)
+		// ==================================================
 	}
-
-	// Add it to Aggregate Stage
-	stages = append(stages, groupbyStage)
-	// ==================================================
 
 	// Project Stage =====================================
 	projectStage := bson.M{
@@ -163,27 +159,27 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, aggr string, sor
 		return nil, err
 	}
 
-	filtercount, err := collection.CountDocuments(ctx, filterdoc)
-	if err != nil {
-		return utils.Map{}, err
-	}
-	basefilterdoc := bson.D{
-		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
-		{Key: db_common.FLD_IS_DELETED, Value: false}}
+	// filtercount, err := collection.CountDocuments(ctx, filterdoc)
+	// if err != nil {
+	// 	return utils.Map{}, err
+	// }
+	// basefilterdoc := bson.D{
+	// 	{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
+	// 	{Key: db_common.FLD_IS_DELETED, Value: false}}
 
-	// Append StaffId in filter if available
-	if len(p.staffId) > 0 {
-		basefilterdoc = append(basefilterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
-	}
-	totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
-	if err != nil {
-		return utils.Map{}, err
-	}
+	// // Append StaffId in filter if available
+	// if len(p.staffId) > 0 {
+	// 	basefilterdoc = append(basefilterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	// }
+	// totalcount, err := collection.CountDocuments(ctx, basefilterdoc)
+	// if err != nil {
+	// 	return utils.Map{}, err
+	// }
 
 	response := utils.Map{
 		db_common.LIST_SUMMARY: utils.Map{
-			db_common.LIST_TOTALSIZE:    totalcount,
-			db_common.LIST_FILTEREDSIZE: filtercount,
+			db_common.LIST_TOTALSIZE:    len(results), //totalcount,
+			db_common.LIST_FILTEREDSIZE: len(results), //filtercount,
 			db_common.LIST_RESULTSIZE:   len(results),
 		},
 		db_common.LIST_RESULT: results,
