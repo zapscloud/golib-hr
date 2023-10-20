@@ -7,6 +7,7 @@ import (
 	"github.com/zapscloud/golib-dbutils/db_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
 	"github.com/zapscloud/golib-hr/hr_repository"
+	"github.com/zapscloud/golib-platform/platform_common"
 	"github.com/zapscloud/golib-platform/platform_repository"
 	"github.com/zapscloud/golib-platform/platform_services"
 	"github.com/zapscloud/golib-utils/utils"
@@ -34,6 +35,7 @@ type staffBaseService struct {
 	dbRegion            db_utils.DatabaseService
 	daoStaff            hr_repository.StaffDao
 	daoPlatformBusiness platform_repository.BusinessDao
+	daoPlatformAppUser  platform_repository.AppUserDao
 	child               StaffService
 	businessID          string
 }
@@ -74,6 +76,7 @@ func NewStaffService(props utils.Map) (StaffService, error) {
 	// Instantiate other services
 	p.daoStaff = hr_repository.NewStaffDao(p.dbRegion.GetClient(), p.businessID)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
+	p.daoPlatformAppUser = platform_repository.NewAppUserDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessID)
 	if err != nil {
@@ -104,6 +107,9 @@ func (p *staffBaseService) List(filter string, sort string, skip int64, limit in
 	if err != nil {
 		return nil, err
 	}
+
+	// Lookup Appuser Info
+	p.lookupAppuser(response)
 
 	log.Println("AccountService::FindAll - End ")
 	return response, nil
@@ -198,4 +204,32 @@ func (p *staffBaseService) errorReturn(err error) (StaffService, error) {
 	// Close the Database Connection
 	p.EndService()
 	return nil, err
+}
+
+func (p *staffBaseService) lookupAppuser(response utils.Map) {
+
+	// Enumerate All staffs and lookup platform_app_user table
+	dataStaff, err := utils.GetMemberData(response, db_common.LIST_RESULT)
+
+	if err == nil {
+		staffs := dataStaff.([]utils.Map)
+		for _, staff := range staffs {
+			p.mergeUserInfo(staff)
+			//log.Println(staff)
+		}
+	}
+}
+
+func (p *staffBaseService) mergeUserInfo(staffInfo utils.Map) {
+
+	staffId, _ := utils.GetMemberDataStr(staffInfo, hr_common.FLD_STAFF_ID)
+	staffData, err := p.daoPlatformAppUser.Get(staffId)
+	if err == nil {
+		// Delete unwanted fields
+		delete(staffData, db_common.FLD_CREATED_AT)
+		delete(staffData, db_common.FLD_UPDATED_AT)
+		delete(staffData, platform_common.FLD_APP_USER_ID)
+
+		staffInfo[hr_common.FLD_APP_USER_INFO] = staffData
+	}
 }

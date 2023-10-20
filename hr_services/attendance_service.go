@@ -9,6 +9,7 @@ import (
 	"github.com/zapscloud/golib-dbutils/db_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
 	"github.com/zapscloud/golib-hr/hr_repository"
+	"github.com/zapscloud/golib-platform/platform_common"
 	"github.com/zapscloud/golib-platform/platform_repository"
 	"github.com/zapscloud/golib-platform/platform_services"
 	"github.com/zapscloud/golib-utils/utils"
@@ -46,6 +47,7 @@ type attendanceBaseService struct {
 	dbRegion            db_utils.DatabaseService
 	daoAttendance       hr_repository.AttendanceDao
 	daoPlatformBusiness platform_repository.BusinessDao
+	daoPlatformAppUser  platform_repository.AppUserDao
 	daoStaff            hr_repository.StaffDao
 
 	child      AttendanceService
@@ -90,6 +92,7 @@ func NewAttendanceService(props utils.Map) (AttendanceService, error) {
 
 	// Initialize services
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
+	p.daoPlatformAppUser = platform_repository.NewAppUserDao(p.GetClient())
 	p.daoAttendance = hr_repository.NewAttendanceDao(p.dbRegion.GetClient(), p.businessId, p.staffId)
 	p.daoStaff = hr_repository.NewStaffDao(p.dbRegion.GetClient(), p.businessId)
 
@@ -139,6 +142,9 @@ func (p *attendanceBaseService) List(filter string, sort string, skip int64, lim
 		return nil, err
 	}
 
+	// Lookup Appuser Info
+	p.lookupAppuser(response)
+
 	log.Println("AttendanceService::FindAll - End ")
 	return response, nil
 }
@@ -176,7 +182,7 @@ func (p *attendanceBaseService) Find(filter string) (utils.Map, error) {
 // 	log.Println("AttendanceService::Create - Begin")
 
 // 	// Create AttendanceId
-// 	attendanceId := p.createAttendanceId(indata)
+// 	attendanceId := utils.GenerateUniqueId("atten")
 
 // 	if utils.IsEmpty(p.staffId) {
 // 		err := &utils.AppError{
@@ -210,7 +216,7 @@ func (p *attendanceBaseService) Find(filter string) (utils.Map, error) {
 // 	log.Println("AttendanceService::CreateMany - Begin")
 
 // 	// Create AttendanceId
-// 	attendanceId := p.createAttendanceId(indata)
+// 	attendanceId := utils.GenerateUniqueId("atten")
 
 // 	// Check staffId received in indata
 // 	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
@@ -246,7 +252,7 @@ func (p *attendanceBaseService) ClockIn(indata utils.Map) (utils.Map, error) {
 	log.Println("AttendanceService::ClockIn - Begin")
 
 	// Create AttendanceId
-	attendanceId := p.createAttendanceId(indata)
+	attendanceId := utils.GenerateUniqueId("atten")
 
 	// Add Current DateTime
 	indata[hr_common.FLD_DATETIME] = time.Now().UTC()
@@ -277,7 +283,7 @@ func (p *attendanceBaseService) ClockInMany(indata utils.Map) (utils.Map, error)
 	log.Println("AttendanceService::ClockInMany - Begin")
 
 	// Create AttendanceId
-	attendanceId := p.createAttendanceId(indata)
+	attendanceId := utils.GenerateUniqueId("atten")
 
 	// Check staffId received in indata
 	staffId, _ := utils.GetMemberDataStr(indata, hr_common.FLD_STAFF_ID)
@@ -478,7 +484,30 @@ func (p *attendanceBaseService) convertStrToDateFormat(indata utils.Map) (utils.
 	return indata, err
 }
 
-func (p *attendanceBaseService) createAttendanceId(indata utils.Map) string {
+func (p *attendanceBaseService) lookupAppuser(response utils.Map) {
 
-	return utils.GenerateUniqueId("atten")
+	// Enumerate All staffs and lookup platform_app_user table
+	dataStaff, err := utils.GetMemberData(response, db_common.LIST_RESULT)
+
+	if err == nil {
+		staffs := dataStaff.([]utils.Map)
+		for _, staff := range staffs {
+			p.mergeUserInfo(staff)
+			//log.Println(staff)
+		}
+	}
+}
+
+func (p *attendanceBaseService) mergeUserInfo(staffInfo utils.Map) {
+
+	staffId, _ := utils.GetMemberDataStr(staffInfo, hr_common.FLD_STAFF_ID)
+	staffData, err := p.daoPlatformAppUser.Get(staffId)
+	if err == nil {
+		// Delete unwanted fields
+		delete(staffData, db_common.FLD_CREATED_AT)
+		delete(staffData, db_common.FLD_UPDATED_AT)
+		delete(staffData, platform_common.FLD_APP_USER_ID)
+
+		staffInfo[hr_common.FLD_APP_USER_INFO] = staffData
+	}
 }

@@ -3,9 +3,11 @@ package hr_services
 import (
 	"log"
 
+	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/db_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
 	"github.com/zapscloud/golib-hr/hr_repository"
+	"github.com/zapscloud/golib-platform/platform_common"
 	"github.com/zapscloud/golib-platform/platform_repository"
 	"github.com/zapscloud/golib-platform/platform_services"
 	"github.com/zapscloud/golib-utils/utils"
@@ -13,7 +15,7 @@ import (
 
 // ReportsService - Reports Service structure
 type ReportsService interface {
-	GetAttendanceSummary(filter string, sort string, skip int64, limit int64) (utils.Map, error)
+	GetAttendanceSummary(filter string, aggr string, sort string, skip int64, limit int64) (utils.Map, error)
 
 	BeginTransaction()
 	CommitTransaction()
@@ -24,9 +26,10 @@ type ReportsService interface {
 
 type reportsBaseService struct {
 	db_utils.DatabaseService
-	dbRegion    db_utils.DatabaseService
-	daoReports  hr_repository.ReportsDao
-	daoBusiness platform_repository.BusinessDao
+	dbRegion            db_utils.DatabaseService
+	daoReports          hr_repository.ReportsDao
+	daoPlatformBusiness platform_repository.BusinessDao
+	daoPlatformAppUser  platform_repository.AppUserDao
 
 	child      ReportsService
 	businessID string
@@ -72,9 +75,10 @@ func NewReportsService(props utils.Map) (ReportsService, error) {
 
 	// Instantiate other services
 	p.daoReports = hr_repository.NewReportsDao(p.dbRegion.GetClient(), p.businessID, p.staffID)
-	p.daoBusiness = platform_repository.NewBusinessDao(p.GetClient())
+	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
+	p.daoPlatformAppUser = platform_repository.NewAppUserDao(p.GetClient())
 
-	_, err = p.daoBusiness.Get(businessID)
+	_, err = p.daoPlatformBusiness.Get(businessID)
 	if err != nil {
 		err := &utils.AppError{
 			ErrorCode:   funcode + "01",
@@ -95,14 +99,17 @@ func (p *reportsBaseService) EndService() {
 }
 
 // GetAttendanceSummary retrieves reports data
-func (p *reportsBaseService) GetAttendanceSummary(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *reportsBaseService) GetAttendanceSummary(filter string, aggr string, sort string, skip int64, limit int64) (utils.Map, error) {
 	log.Println("ReportsService::GetReportsData - Begin")
 
 	daoReports := p.daoReports
-	response, err := daoReports.GetAttendanceSummary(filter, sort, skip, limit)
+	response, err := daoReports.GetAttendanceSummary(filter, aggr, sort, skip, limit)
 	if err != nil {
 		return nil, err
 	}
+
+	// Lookup Appuser Info
+	p.lookupAppuser(response)
 
 	log.Println("ReportsService::GetAttendanceSummary - End")
 	return response, nil
@@ -113,4 +120,32 @@ func (p *reportsBaseService) errorReturn(err error) (ReportsService, error) {
 	// Close the Database Connection
 	p.EndService()
 	return nil, err
+}
+
+func (p *reportsBaseService) lookupAppuser(response utils.Map) {
+
+	// Enumerate All staffs and lookup platform_app_user table
+	dataStaff, err := utils.GetMemberData(response, db_common.LIST_RESULT)
+
+	if err == nil {
+		staffs := dataStaff.([]utils.Map)
+		for _, staff := range staffs {
+			p.mergeUserInfo(staff)
+			//log.Println(staff)
+		}
+	}
+}
+
+func (p *reportsBaseService) mergeUserInfo(staffInfo utils.Map) {
+
+	staffId, _ := utils.GetMemberDataStr(staffInfo, hr_common.FLD_STAFF_ID)
+	staffData, err := p.daoPlatformAppUser.Get(staffId)
+	if err == nil {
+		// Delete unwanted fields
+		delete(staffData, db_common.FLD_CREATED_AT)
+		delete(staffData, db_common.FLD_UPDATED_AT)
+		delete(staffData, platform_common.FLD_APP_USER_ID)
+
+		staffInfo[hr_common.FLD_APP_USER_INFO] = staffData
+	}
 }

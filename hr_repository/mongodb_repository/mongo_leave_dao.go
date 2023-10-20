@@ -364,28 +364,28 @@ func (p *LeaveMongoDBDao) DeleteAll() (int64, error) {
 
 func (p *LeaveMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
-	// Lookup Stage for PlatformAppUsers ========================================
-	lookupStage := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
-				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
-					db_common.FLD_DEFAULT_ID: 0,
-					db_common.FLD_IS_DELETED: 0,
-					db_common.FLD_CREATED_AT: 0,
-					db_common.FLD_UPDATED_AT: 0}},
-			},
-		},
-	}
-	// Add it to Aggregate Stage
-	stages = append(stages, lookupStage)
+	// // Lookup Stage for PlatformAppUsers ========================================
+	// lookupStage := bson.M{
+	// 	hr_common.MONGODB_LOOKUP: bson.M{
+	// 		hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+	// 		hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
+	// 		hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+	// 		hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
+	// 		hr_common.MONGODB_STR_PIPELINE: []bson.M{
+	// 			// Remove following fields from result-set
+	// 			{hr_common.MONGODB_PROJECT: bson.M{
+	// 				db_common.FLD_DEFAULT_ID: 0,
+	// 				db_common.FLD_IS_DELETED: 0,
+	// 				db_common.FLD_CREATED_AT: 0,
+	// 				db_common.FLD_UPDATED_AT: 0}},
+	// 		},
+	// 	},
+	// }
+	// // Add it to Aggregate Stage
+	// stages = append(stages, lookupStage)
 
 	// Lookup Stage for User ==========================================
-	lookupStage = bson.M{
+	lookupStage := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
 			hr_common.MONGODB_STR_FROM:         hr_common.DbHrLeaveTypes,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_LEAVETYPE_ID,

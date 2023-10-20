@@ -367,33 +367,33 @@ func (p *AttendanceMongoDBDao) Delete(attendanceId string) (int64, error) {
 	log.Printf("attendanceMongoDao::Delete - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
 }
+
 func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
-	// Lookup Stage for Token PlatformAppUsers ========================================
-
-	lookupStage := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
-				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
-					db_common.FLD_DEFAULT_ID:              0,
-					db_common.FLD_IS_DELETED:              0,
-					db_common.FLD_CREATED_AT:              0,
-					db_common.FLD_UPDATED_AT:              0,
-					hr_common.FLD_BUSINESS_ID:             0,
-					platform_common.FLD_APP_USER_PASSWORD: 0}},
-			},
-		},
-	}
-	// Add it to Aggregate Stage Shift
-	stages = append(stages, lookupStage)
+	// // Lookup Stage for Token PlatformAppUsers ========================================
+	// lookupStage := bson.M{
+	// 	hr_common.MONGODB_LOOKUP: bson.M{
+	// 		hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+	// 		hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
+	// 		hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+	// 		hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
+	// 		hr_common.MONGODB_STR_PIPELINE: []bson.M{
+	// 			// Remove following fields from result-set
+	// 			{hr_common.MONGODB_PROJECT: bson.M{
+	// 				db_common.FLD_DEFAULT_ID:              0,
+	// 				db_common.FLD_IS_DELETED:              0,
+	// 				db_common.FLD_CREATED_AT:              0,
+	// 				db_common.FLD_UPDATED_AT:              0,
+	// 				hr_common.FLD_BUSINESS_ID:             0,
+	// 				platform_common.FLD_APP_USER_PASSWORD: 0}},
+	// 		},
+	// 	},
+	// }
+	// // Add it to Aggregate Stage Shift
+	// stages = append(stages, lookupStage)
 
 	// Lookup Stage for User ==========================================
-	lookupStage = bson.M{
+	lookupStage := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
 			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_TYPE_OF_WORK,
