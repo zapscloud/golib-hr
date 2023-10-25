@@ -126,11 +126,12 @@ const (
 	FLD_LEAVE_TYPE        = "leave_type"
 
 	// Shift Table
-	FLD_SHIFT_ID          = "shift_id"
-	FLD_SHIFT_FROM        = "shift_from"
-	FLD_SHIFT_TO          = "shift_to"
-	FLD_SHIFT_DESCRIPTION = "shift_description"
-	FLD_TYPE_OF_WORK      = "type_of_work"
+	FLD_SHIFT_ID                    = "shift_id"
+	FLD_SHIFT_FROM                  = "shift_from"
+	FLD_SHIFT_TO                    = "shift_to"
+	FLD_SHIFT_DESCRIPTION           = "shift_description"
+	FLD_TYPE_OF_WORK                = "type_of_work"
+	FLD_IS_SHIFT_OVERLAPST_NEXT_DAY = "is_shift_overlaps_nextday"
 
 	// Work Location Table
 	FLD_WORKLOCATION_ID          = "work_location_id"

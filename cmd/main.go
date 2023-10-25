@@ -77,9 +77,18 @@ func main() {
 	dateResult, err := time.ParseInLocation(layout, date_time, loc)
 	log.Println("DateTime ", dateResult, dateResult.UTC(), err)
 
-	fromTime := "23:00:00"
-	frTime, err := time.Parse(time.TimeOnly, fromTime)
-	log.Println(fromTime, frTime, err)
+	fromTime := "21:00:00"
+	frTime, _ := time.Parse(time.TimeOnly, fromTime)
+
+	toTime := "18:00:00"
+	tTime, _ := time.Parse(time.TimeOnly, toTime)
+	if frTime.Unix() < tTime.Unix() {
+		log.Println("From Time is smaller")
+	} else {
+		log.Println("To Time is smaller")
+	}
+
+	log.Println(frTime.Unix(), tTime.Unix())
 
 }
 
