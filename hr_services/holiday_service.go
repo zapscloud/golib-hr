@@ -137,7 +137,7 @@ func (p *holidayBaseService) Create(indata utils.Map) (utils.Map, error) {
 	if dataok {
 		holidayId = strings.ToLower(dataval.(string))
 	} else {
-		holidayId = utils.GenerateUniqueId("cont")
+		holidayId = utils.GenerateUniqueId("holi")
 		log.Println("Unique Account ID", holidayId)
 	}
 	indata[hr_common.FLD_HOLIDAY_ID] = holidayId

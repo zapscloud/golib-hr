@@ -3,6 +3,7 @@ package hr_services
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/db_utils"
@@ -99,7 +100,7 @@ func (p *shiftBaseService) EndService() {
 // List - List All records
 func (p *shiftBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
-	log.Println("AccountService::FindAll - Begin")
+	log.Println("ShiftService::FindAll - Begin")
 
 	daoShift := p.daoShift
 	response, err := daoShift.List(filter, sort, skip, limit)
@@ -107,24 +108,24 @@ func (p *shiftBaseService) List(filter string, sort string, skip int64, limit in
 		return nil, err
 	}
 
-	log.Println("AccountService::FindAll - End ")
+	log.Println("ShiftService::FindAll - End ")
 	return response, nil
 }
 
 // FindByCode - Find By Code
 func (p *shiftBaseService) Get(shiftId string) (utils.Map, error) {
-	log.Printf("AccountService::FindByCode::  Begin %v", shiftId)
+	log.Printf("ShiftService::FindByCode::  Begin %v", shiftId)
 
 	data, err := p.daoShift.Get(shiftId)
-	log.Println("AccountService::FindByCode:: End ", err)
+	log.Println("ShiftService::FindByCode:: End ", err)
 	return data, err
 }
 
 func (p *shiftBaseService) Find(filter string) (utils.Map, error) {
-	log.Println("AccountService::FindByCode::  Begin ", filter)
+	log.Println("ShiftService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoShift.Find(filter)
-	log.Println("AccountService::FindByCode:: End ", data, err)
+	log.Println("ShiftService::FindByCode:: End ", data, err)
 	return data, err
 }
 
@@ -147,7 +148,14 @@ func (p *shiftBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	_, err := p.daoShift.Get(shiftId)
 	if err == nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
+		err := &utils.AppError{
+			ErrorCode:   "S30102",
+			ErrorMsg:    "Existing Shift ID !",
+			ErrorDetail: "Given Shift ID already exist"}
+		return indata, err
+	}
+	// Validate TimeFormat
+	if p.validateTimeFormat(indata) != nil {
 		return indata, err
 	}
 
@@ -162,7 +170,7 @@ func (p *shiftBaseService) Create(indata utils.Map) (utils.Map, error) {
 // Update - Update Service
 func (p *shiftBaseService) Update(shiftId string, indata utils.Map) (utils.Map, error) {
 
-	log.Println("AccountService::Update - Begin")
+	log.Println("ShiftService::Update - Begin")
 
 	data, err := p.daoShift.Get(shiftId)
 	if err != nil {
@@ -173,15 +181,21 @@ func (p *shiftBaseService) Update(shiftId string, indata utils.Map) (utils.Map, 
 	delete(indata, hr_common.FLD_SHIFT_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 
+	// Validate the TimeFormat
+	if p.validateTimeFormat(indata) != nil {
+		log.Println("ShiftService::convertStrToTimeFormat - Error ", err)
+		return indata, err
+	}
+
 	data, err = p.daoShift.Update(shiftId, indata)
-	log.Println("AccountService::Update - End ")
+	log.Println("ShiftService::Update - End ", err)
 	return data, err
 }
 
 // Delete - Delete Service
 func (p *shiftBaseService) Delete(shiftId string, delete_permanent bool) error {
 
-	log.Println("AccountService::Delete - Begin", shiftId)
+	log.Println("ShiftService::Delete - Begin", shiftId)
 
 	daoShift := p.daoShift
 	if delete_permanent {
@@ -207,4 +221,34 @@ func (p *shiftBaseService) errorReturn(err error) (ShiftService, error) {
 	// Close the Database Connection
 	p.EndService()
 	return nil, err
+}
+
+func (p *shiftBaseService) validateTimeFormat(indata utils.Map) error {
+	// Convert Time string to Date Format
+	shiftFromTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_SHIFT_FROM)
+	if err == nil {
+		_, err = time.Parse(time.TimeOnly, shiftFromTime)
+		if err != nil {
+			err = &utils.AppError{
+				ErrorCode:   "S30102",
+				ErrorMsg:    "Failed to Parse Time Value",
+				ErrorDetail: "Invalid From-Shift-Time value"}
+			return err
+		}
+	}
+
+	// Convert Time string to Date Format
+	shiftToTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_SHIFT_TO)
+	if err == nil {
+		_, err = time.Parse(time.TimeOnly, shiftToTime)
+		if err != nil {
+			err = &utils.AppError{
+				ErrorCode:   "S30102",
+				ErrorMsg:    "Failed to Parse Time Value",
+				ErrorDetail: "Invalid To-Shift-Time value"}
+			return err
+		}
+	}
+
+	return nil
 }

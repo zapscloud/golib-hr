@@ -77,6 +77,10 @@ func main() {
 	dateResult, err := time.ParseInLocation(layout, date_time, loc)
 	log.Println("DateTime ", dateResult, dateResult.UTC(), err)
 
+	fromTime := "23:00:00"
+	frTime, err := time.Parse(time.TimeOnly, fromTime)
+	log.Println(fromTime, frTime, err)
+
 }
 
 func EmptyBusinessAttendance(srv hr_services.AttendanceService) {
