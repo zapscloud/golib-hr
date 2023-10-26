@@ -201,6 +201,11 @@ func (p *designationBaseService) Delete(designation_id string, delete_permanent 
 	log.Println("DesignationService::Delete - Begin", designation_id, delete_permanent)
 
 	daoDesignation := p.daoDesignation
+	_, err := daoDesignation.Get(designation_id)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoDesignation.Delete(designation_id)
 		if err != nil {
@@ -210,7 +215,7 @@ func (p *designationBaseService) Delete(designation_id string, delete_permanent 
 	} else {
 
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(designation_id, indata)
+		data, err := daoDesignation.Update(designation_id, indata)
 		if err != nil {
 			return err
 		}

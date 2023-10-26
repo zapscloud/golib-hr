@@ -182,6 +182,11 @@ func (p *clientBaseService) Delete(clientId string, delete_permanent bool) error
 	log.Println("ClientService::Delete - Begin", clientId)
 
 	daoClient := p.daoClient
+	_, err := daoClient.Get(clientId)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoClient.Delete(clientId)
 		if err != nil {
@@ -190,7 +195,7 @@ func (p *clientBaseService) Delete(clientId string, delete_permanent bool) error
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(clientId, indata)
+		data, err := daoClient.Update(clientId, indata)
 		if err != nil {
 			return err
 		}

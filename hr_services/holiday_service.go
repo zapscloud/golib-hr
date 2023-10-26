@@ -183,6 +183,11 @@ func (p *holidayBaseService) Delete(holiday_id string, delete_permanent bool) er
 	log.Println("AccountService::Delete - Begin", holiday_id)
 
 	daoHoliday := p.daoHoliday
+	_, err := daoHoliday.Get(holiday_id)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoHoliday.Delete(holiday_id)
 		if err != nil {
@@ -191,7 +196,7 @@ func (p *holidayBaseService) Delete(holiday_id string, delete_permanent bool) er
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(holiday_id, indata)
+		data, err := daoHoliday.Update(holiday_id, indata)
 		if err != nil {
 			return err
 		}

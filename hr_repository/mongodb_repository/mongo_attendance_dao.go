@@ -190,7 +190,7 @@ func (p *AttendanceMongoDBDao) Get(attendanceId string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("attendanceMongoDao::Get:: Begin ", attendanceId)
+	log.Println("AttendanceMongoDao::Get:: Begin ", attendanceId)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
 	log.Println("Find:: Got Collection ")
@@ -220,7 +220,7 @@ func (p *AttendanceMongoDBDao) Get(attendanceId string) (utils.Map, error) {
 	// Remove fields from result
 	result = db_common.AmendFldsForGet(result)
 
-	log.Println("attendanceMongoDao::Get:: End Found a single document: \n", err)
+	log.Println("AttendanceMongoDao::Get:: End Found a single document: \n", err)
 	return result, nil
 }
 
@@ -232,7 +232,7 @@ func (p *AttendanceMongoDBDao) Find(filter string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("attendanceMongoDao::Find:: Begin ", filter)
+	log.Println("AttendanceMongoDao::Find:: Begin ", filter)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
 	log.Println("Find:: Got Collection ", err)
@@ -265,7 +265,7 @@ func (p *AttendanceMongoDBDao) Find(filter string) (utils.Map, error) {
 	// Remove fields from result
 	result = db_common.AmendFldsForGet(result)
 
-	log.Println("attendanceMongoDao::Find:: End Found a single document: \n", err)
+	log.Println("AttendanceMongoDao::Find:: End Found a single document: \n", err)
 	return result, nil
 }
 
@@ -303,7 +303,7 @@ func (p *AttendanceMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 // **************************
 func (p *AttendanceMongoDBDao) Update(attendanceId string, indata utils.Map) (utils.Map, error) {
 
-	log.Println("Update - Begin")
+	log.Println("AttendanceMongoDao::Update - Begin")
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
 	if err != nil {
 		return utils.Map{}, err
@@ -311,7 +311,7 @@ func (p *AttendanceMongoDBDao) Update(attendanceId string, indata utils.Map) (ut
 	// Modify Fields for Update
 	indata = db_common.AmendFldsforUpdate(indata)
 
-	log.Printf("Update - Values %v", indata)
+	log.Printf("AttendanceMongoDao::Update - Values %v", indata)
 
 	filter := bson.D{
 		{Key: hr_common.FLD_ATTENDANCE_ID, Value: attendanceId},
@@ -326,9 +326,51 @@ func (p *AttendanceMongoDBDao) Update(attendanceId string, indata utils.Map) (ut
 	if err != nil {
 		return utils.Map{}, err
 	}
-	log.Println("Update a single document: ", updateResult.ModifiedCount)
+	log.Println("AttendanceMongoDao::Updated a single document: ", updateResult.ModifiedCount)
 
-	log.Println("Update - End")
+	log.Println("AttendanceMongoDao::Update - End")
+	return indata, nil
+}
+
+// *******************************
+// UpdateMany - Update Collection
+//
+// *******************************
+func (p *AttendanceMongoDBDao) UpdateMany(indata utils.Map) (utils.Map, error) {
+
+	log.Println("AttendanceMongoDao::UpdateMany - Begin")
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
+	if err != nil {
+		return utils.Map{}, err
+	}
+	// Modify Fields for Update
+	indata = db_common.AmendFldsforUpdate(indata)
+
+	log.Printf("Update - Values %v", indata)
+
+	filter := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+
+	if utils.IsEmpty(p.staffId) {
+		err = &utils.AppError{
+			ErrorCode:   "S30102",
+			ErrorMsg:    "StaffId should not be empty",
+			ErrorDetail: "StaffId should not be empty for UpdateMany calls"}
+		return utils.Map{}, err
+	}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
+
+	updateResult, err := collection.UpdateMany(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	if err != nil {
+		return utils.Map{}, err
+	}
+	log.Println("Updated a many document: ", updateResult.ModifiedCount)
+
+	log.Println("AttendanceMongoDao::UpdateMany - End")
 	return indata, nil
 }
 
@@ -338,7 +380,7 @@ func (p *AttendanceMongoDBDao) Update(attendanceId string, indata utils.Map) (ut
 // **************************
 func (p *AttendanceMongoDBDao) Delete(attendanceId string) (int64, error) {
 
-	log.Println("attendanceMongoDao::Delete - Begin ", attendanceId)
+	log.Println("AttendanceMongoDao::Delete - Begin ", attendanceId)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
 	if err != nil {
@@ -364,7 +406,50 @@ func (p *AttendanceMongoDBDao) Delete(attendanceId string) (int64, error) {
 		log.Println("Error in delete ", err)
 		return 0, err
 	}
-	log.Printf("attendanceMongoDao::Delete - End deleted %v documents\n", res.DeletedCount)
+	log.Printf("AttendanceMongoDao::Delete - End deleted %v documents\n", res.DeletedCount)
+	return res.DeletedCount, nil
+}
+
+// ************************************
+// DeleteMany - Delete Many Collection
+//
+// ************************************
+func (p *AttendanceMongoDBDao) DeleteMany() (int64, error) {
+
+	log.Println("AttendanceMongoDao::DeleteMany - Begin ", p.businessId, p.staffId)
+
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrAttendances)
+	if err != nil {
+		return 0, err
+	}
+	opts := options.Delete().SetCollation(&options.Collation{
+		Locale:    db_common.LOCALE,
+		Strength:  1,
+		CaseLevel: false,
+	})
+
+	filter := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+
+	if utils.IsEmpty(p.staffId) {
+		err = &utils.AppError{
+			ErrorCode:   "S30102",
+			ErrorMsg:    "StaffId should not be empty",
+			ErrorDetail: "StaffId should not be empty for DeleteMany calls"}
+		return 0, err
+	}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
+
+	res, err := collection.DeleteMany(ctx, filter, opts)
+	if err != nil {
+		log.Println("Error in delete ", err)
+		return 0, err
+	}
+	log.Printf("AttendanceMongoDao::DeleteMany - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
 }
 

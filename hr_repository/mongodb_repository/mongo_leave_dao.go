@@ -179,7 +179,7 @@ func (p *LeaveMongoDBDao) Get(account_id string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("accountMongoDao::Get:: Begin ", account_id)
+	log.Println("LeaveMongoDao::Get:: Begin ", account_id)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
 	log.Println("Find:: Got Collection ")
@@ -207,7 +207,7 @@ func (p *LeaveMongoDBDao) Get(account_id string) (utils.Map, error) {
 	// Remove fields from result
 	result = db_common.AmendFldsForGet(result)
 
-	log.Println("accountMongoDao::Get:: End Found a single document: \n", err)
+	log.Println("LeaveMongoDao::Get:: End Found a single document: \n", err)
 	return result, nil
 }
 
@@ -216,7 +216,7 @@ func (p *LeaveMongoDBDao) Find(filter string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("accountMongoDao::Find:: Begin ", filter)
+	log.Println("LeaveMongoDao::Find:: Begin ", filter)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
 	log.Println("Find:: Got Collection ", err)
@@ -248,7 +248,7 @@ func (p *LeaveMongoDBDao) Find(filter string) (utils.Map, error) {
 	// Remove fields from result
 	result = db_common.AmendFldsForGet(result)
 
-	log.Println("accountMongoDao::Find:: End Found a single document: \n", err)
+	log.Println("LeaveMongoDao::Find:: End Found a single document: \n", err)
 	return result, nil
 }
 
@@ -306,10 +306,52 @@ func (p *LeaveMongoDBDao) Update(account_id string, indata utils.Map) (utils.Map
 	return indata, nil
 }
 
+// *******************************
+// UpdateMany - Update Collection
+//
+// *******************************
+func (p *LeaveMongoDBDao) UpdateMany(indata utils.Map) (utils.Map, error) {
+
+	log.Println("LeaveMongoDao::UpdateMany - Begin")
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
+	if err != nil {
+		return utils.Map{}, err
+	}
+	// Modify Fields for Update
+	indata = db_common.AmendFldsforUpdate(indata)
+
+	log.Printf("Update - Values %v", indata)
+
+	filter := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+
+	if utils.IsEmpty(p.staffId) {
+		err = &utils.AppError{
+			ErrorCode:   "S30102",
+			ErrorMsg:    "StaffId should not be empty",
+			ErrorDetail: "StaffId should not be empty for UpdateMany calls"}
+		return utils.Map{}, err
+	}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
+
+	updateResult, err := collection.UpdateMany(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	if err != nil {
+		return utils.Map{}, err
+	}
+	log.Println("Updated a many document: ", updateResult.ModifiedCount)
+
+	log.Println("LeaveMongoDao::UpdateMany - End")
+	return indata, nil
+}
+
 // Delete - Delete Collection
 func (p *LeaveMongoDBDao) Delete(account_id string) (int64, error) {
 
-	log.Println("accountMongoDao::Delete - Begin ", account_id)
+	log.Println("LeaveMongoDao::Delete - Begin ", account_id)
 
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
 	if err != nil {
@@ -333,14 +375,18 @@ func (p *LeaveMongoDBDao) Delete(account_id string) (int64, error) {
 		log.Println("Error in delete ", err)
 		return 0, err
 	}
-	log.Printf("accountMongoDao::Delete - End deleted %v documents\n", res.DeletedCount)
+	log.Printf("LeaveMongoDao::Delete - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
 }
 
-// DeleteAll - Delete All Collection
-func (p *LeaveMongoDBDao) DeleteAll() (int64, error) {
+// ************************************
+// DeleteMany - Delete Many Collection
+//
+// ************************************
+func (p *LeaveMongoDBDao) DeleteMany() (int64, error) {
 
-	log.Println("accountMongoDao::DeleteAll - Begin ")
+	log.Println("LeaveMongoDBDao::DeleteMany - Begin ", p.businessId, p.staffId)
+
 	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrLeaves)
 	if err != nil {
 		return 0, err
@@ -351,14 +397,28 @@ func (p *LeaveMongoDBDao) DeleteAll() (int64, error) {
 		CaseLevel: false,
 	})
 
-	filter := bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}
+	filter := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
+
+	if utils.IsEmpty(p.staffId) {
+		err = &utils.AppError{
+			ErrorCode:   "S30102",
+			ErrorMsg:    "StaffId should not be empty",
+			ErrorDetail: "StaffId should not be empty for DeleteMany calls"}
+		return 0, err
+	}
+
+	// Append StaffId in filter if available
+	if len(p.staffId) > 0 {
+		filter = append(filter, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
+	}
 
 	res, err := collection.DeleteMany(ctx, filter, opts)
 	if err != nil {
 		log.Println("Error in delete ", err)
 		return 0, err
 	}
-	log.Printf("accountMongoDao::DeleteAll - End deleted %v documents\n", res.DeletedCount)
+	log.Printf("LeaveMongoDBDao::DeleteMany - End deleted %v documents\n", res.DeletedCount)
 	return res.DeletedCount, nil
 }
 

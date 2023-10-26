@@ -174,6 +174,11 @@ func (p *staffTypeBaseService) Delete(staffTypeId string, delete_permanent bool)
 	log.Println("AccountService::Delete - Begin", staffTypeId)
 
 	daoStaffType := p.daoStaffType
+	_, err := daoStaffType.Get(staffTypeId)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoStaffType.Delete(staffTypeId)
 		if err != nil {
@@ -182,7 +187,7 @@ func (p *staffTypeBaseService) Delete(staffTypeId string, delete_permanent bool)
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(staffTypeId, indata)
+		data, err := daoStaffType.Update(staffTypeId, indata)
 		if err != nil {
 			return err
 		}

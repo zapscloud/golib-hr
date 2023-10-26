@@ -26,11 +26,14 @@ type LeaveDao interface {
 	// Update - Update Collection
 	Update(leaveId string, indata utils.Map) (utils.Map, error)
 
+	// UpdateMany - Update Collection
+	UpdateMany(indata utils.Map) (utils.Map, error)
+
 	// Delete - Delete Collection
 	Delete(leaveId string) (int64, error)
 
-	// DeleteAll - DeleteAll Collection
-	DeleteAll() (int64, error)
+	// DeleteMany - Delete Many Collection
+	DeleteMany() (int64, error)
 }
 
 // NewLeaveDao - Contruct Leave Dao

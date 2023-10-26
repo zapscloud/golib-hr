@@ -195,6 +195,11 @@ func (p *leaveTypeBaseService) Delete(LeaveType_id string, delete_permanent bool
 	log.Println("LeaveTypeService::Delete - Begin", LeaveType_id, delete_permanent)
 
 	daoLeaveType := p.daoLeaveType
+	_, err := daoLeaveType.Get(LeaveType_id)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoLeaveType.Delete(LeaveType_id)
 		if err != nil {
@@ -203,7 +208,7 @@ func (p *leaveTypeBaseService) Delete(LeaveType_id string, delete_permanent bool
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(LeaveType_id, indata)
+		data, err := daoLeaveType.Update(LeaveType_id, indata)
 		if err != nil {
 			return err
 		}

@@ -182,6 +182,11 @@ func (p *positionBaseService) Delete(position_id string, delete_permanent bool) 
 	log.Println("AccountService::Delete - Begin", position_id)
 
 	daoPosition := p.daoPosition
+	_, err := daoPosition.Get(position_id)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoPosition.Delete(position_id)
 		if err != nil {
@@ -190,7 +195,7 @@ func (p *positionBaseService) Delete(position_id string, delete_permanent bool) 
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(position_id, indata)
+		data, err := daoPosition.Update(position_id, indata)
 		if err != nil {
 			return err
 		}

@@ -33,6 +33,7 @@ type AttendanceService interface {
 	ClockOutMany(indata utils.Map) (utils.Map, error)
 	Update(attendance_id string, indata utils.Map) (utils.Map, error)
 	Delete(attendance_id string, delete_permanent bool) error
+	DeleteAll(delete_permanent bool) error
 
 	BeginTransaction()
 	CommitTransaction()
@@ -428,6 +429,11 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 	log.Println("AttendanceService::Delete - Begin", attendance_id, delete_permanent)
 
 	daoAttendance := p.daoAttendance
+	_, err := daoAttendance.Get(attendance_id)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoAttendance.Delete(attendance_id)
 		if err != nil {
@@ -436,7 +442,7 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(attendance_id, indata)
+		data, err := daoAttendance.Update(attendance_id, indata)
 		if err != nil {
 			return err
 		}
@@ -444,6 +450,34 @@ func (p *attendanceBaseService) Delete(attendance_id string, delete_permanent bo
 	}
 
 	log.Printf("AttendanceService::Delete - End")
+	return nil
+}
+
+// ***********************************************
+// DeleteAll - Delete All Attendance for the staff
+//
+// ***********************************************
+func (p *attendanceBaseService) DeleteAll(delete_permanent bool) error {
+
+	log.Println("AttendanceService::DeleteAll - Begin", delete_permanent)
+
+	daoAttendance := p.daoAttendance
+	if delete_permanent {
+		result, err := daoAttendance.DeleteMany()
+		if err != nil {
+			return err
+		}
+		log.Printf("Delete %v", result)
+	} else {
+		indata := utils.Map{db_common.FLD_IS_DELETED: true}
+		data, err := daoAttendance.UpdateMany(indata)
+		if err != nil {
+			return err
+		}
+		log.Println("Update for Delete Flag", data)
+	}
+
+	log.Printf("AttendanceService::DeleteAll - End")
 	return nil
 }
 

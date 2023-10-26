@@ -183,6 +183,11 @@ func (p *workLocationBaseService) Delete(workLocId string, delete_permanent bool
 	log.Println("AccountService::Delete - Begin", workLocId)
 
 	daoWorkLocation := p.daoWorkLocation
+	_, err := daoWorkLocation.Get(workLocId)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoWorkLocation.Delete(workLocId)
 		if err != nil {
@@ -191,7 +196,7 @@ func (p *workLocationBaseService) Delete(workLocId string, delete_permanent bool
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(workLocId, indata)
+		data, err := daoWorkLocation.Update(workLocId, indata)
 		if err != nil {
 			return err
 		}

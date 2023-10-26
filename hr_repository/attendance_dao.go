@@ -26,8 +26,14 @@ type AttendanceDao interface {
 	// Update - Update Collection
 	Update(attendanceId string, indata utils.Map) (utils.Map, error)
 
+	// UpdateMany - Update Collection
+	UpdateMany(indata utils.Map) (utils.Map, error)
+
 	// Delete - Delete Collection
 	Delete(attendanceId string) (int64, error)
+
+	// DeleteMany - Delete Many Collection
+	DeleteMany() (int64, error)
 }
 
 // NewattendanceMongoDao - Contruct Attendance Dao

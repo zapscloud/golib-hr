@@ -24,6 +24,7 @@ type LeaveService interface {
 	Create(indata utils.Map) (utils.Map, error)
 	Update(leaveId string, indata utils.Map) (utils.Map, error)
 	Delete(leaveId string, delete_permanent bool) error
+	DeleteAll(delete_permanent bool) error
 
 	BeginTransaction()
 	CommitTransaction()
@@ -222,6 +223,11 @@ func (p *leaveBaseService) Delete(leaveId string, delete_permanent bool) error {
 	log.Println("AccountService::Delete - Begin", leaveId)
 
 	daoLeave := p.daoLeave
+	_, err := daoLeave.Get(leaveId)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoLeave.Delete(leaveId)
 		if err != nil {
@@ -230,7 +236,7 @@ func (p *leaveBaseService) Delete(leaveId string, delete_permanent bool) error {
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(leaveId, indata)
+		data, err := daoLeave.Update(leaveId, indata)
 		if err != nil {
 			return err
 		}
@@ -238,6 +244,34 @@ func (p *leaveBaseService) Delete(leaveId string, delete_permanent bool) error {
 	}
 
 	log.Printf("LeaveService::Delete - End")
+	return nil
+}
+
+// ***********************************************
+// DeleteAll - Delete All Leaves/Permissions for the staff
+//
+// ***********************************************
+func (p *leaveBaseService) DeleteAll(delete_permanent bool) error {
+
+	log.Println("LeaveService::DeleteAll - Begin", delete_permanent)
+
+	daoLeave := p.daoLeave
+	if delete_permanent {
+		result, err := daoLeave.DeleteMany()
+		if err != nil {
+			return err
+		}
+		log.Printf("Delete %v", result)
+	} else {
+		indata := utils.Map{db_common.FLD_IS_DELETED: true}
+		data, err := daoLeave.UpdateMany(indata)
+		if err != nil {
+			return err
+		}
+		log.Println("Update for Delete Flag", data)
+	}
+
+	log.Printf("LeaveService::DeleteAll - End")
 	return nil
 }
 

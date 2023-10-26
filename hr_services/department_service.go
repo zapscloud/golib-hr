@@ -193,6 +193,11 @@ func (p *departmentBaseService) Delete(department_id string, delete_permanent bo
 	log.Println("DepartmentService::Delete - Begin", department_id, delete_permanent)
 
 	daoDepartment := p.daoDepartment
+	_, err := daoDepartment.Get(department_id)
+	if err != nil {
+		return err
+	}
+
 	if delete_permanent {
 		result, err := daoDepartment.Delete(department_id)
 		if err != nil {
@@ -201,7 +206,7 @@ func (p *departmentBaseService) Delete(department_id string, delete_permanent bo
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(department_id, indata)
+		data, err := daoDepartment.Update(department_id, indata)
 		if err != nil {
 			return err
 		}
