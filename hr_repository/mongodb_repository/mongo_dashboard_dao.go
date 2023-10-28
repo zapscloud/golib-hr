@@ -292,7 +292,7 @@ func (p *DashboardMongoDBDao) getShiftDetails() (int64, error) {
 	}
 
 	// Get the MongoDB collection
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
 	if err != nil {
 		return 0, err
 	}

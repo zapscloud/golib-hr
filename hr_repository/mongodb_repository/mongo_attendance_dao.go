@@ -6,6 +6,7 @@ import (
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/mongo_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
+	"github.com/zapscloud/golib-platform/platform_common"
 	"github.com/zapscloud/golib-utils/utils"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -476,30 +477,30 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 	// // Add it to Aggregate Stage Shift
 	// stages = append(stages, lookupStage)
 
-	// // Lookup Stage for User ==========================================
-	// lookupStage := bson.M{
-	// 	hr_common.MONGODB_LOOKUP: bson.M{
-	// 		hr_common.MONGODB_STR_FROM:         hr_common.DbHrShiftProfiles,
-	// 		hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_TYPE_OF_WORK,
-	// 		hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_PROFILE_ID,
-	// 		hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
-	// 		hr_common.MONGODB_STR_PIPELINE: []bson.M{
-	// 			// Remove following fields from result-set
-	// 			{hr_common.MONGODB_PROJECT: bson.M{
-	// 				db_common.FLD_DEFAULT_ID:              0,
-	// 				platform_common.FLD_APP_USER_PASSWORD: 0,
-	// 				db_common.FLD_IS_DELETED:              0,
-	// 				db_common.FLD_CREATED_AT:              0,
-	// 				hr_common.FLD_BUSINESS_ID:             0,
-	// 				db_common.FLD_UPDATED_AT:              0}},
-	// 		},
-	// 	},
-	// }
-	// // Add it to Aggregate Stage Worklocation
-	// stages = append(stages, lookupStage)
+	// Lookup Stage for User ==========================================
+	lookupStage := bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_TYPE_OF_WORK,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID:              0,
+					platform_common.FLD_APP_USER_PASSWORD: 0,
+					db_common.FLD_IS_DELETED:              0,
+					db_common.FLD_CREATED_AT:              0,
+					hr_common.FLD_BUSINESS_ID:             0,
+					db_common.FLD_UPDATED_AT:              0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage Worklocation
+	stages = append(stages, lookupStage)
 
 	// Lookup Stage for Token ========================================
-	lookupStage := bson.M{
+	lookupStage = bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
 			hr_common.MONGODB_STR_FROM:         hr_common.DbHrWorkLocations,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_WORKLOCATION,
