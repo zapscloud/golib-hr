@@ -215,9 +215,9 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 	// Lookup Stage for shift =========================
 	lookupStage2 := bson.M{
 		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShiftProfiles,
 			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + "type_of_work",
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_PROFILE_ID,
 			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
 			hr_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set

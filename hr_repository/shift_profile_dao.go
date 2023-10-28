@@ -6,8 +6,8 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// ShiftDao - Contact DAO Repository
-type ShiftDao interface {
+// ShiftProfileDao - Contact DAO Repository
+type ShiftProfileDao interface {
 	// InitializeDao
 	InitializeDao(client utils.Map, businessId string)
 
@@ -15,7 +15,7 @@ type ShiftDao interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
 
 	// Get - Get Contact Details
-	Get(shiftId string) (utils.Map, error)
+	Get(shiftProfileId string) (utils.Map, error)
 
 	// Find - Find by code
 	Find(filter string) (utils.Map, error)
@@ -24,18 +24,18 @@ type ShiftDao interface {
 	Create(indata utils.Map) (utils.Map, error)
 
 	// Update - Update Collection
-	Update(shiftId string, indata utils.Map) (utils.Map, error)
+	Update(shiftProfileId string, indata utils.Map) (utils.Map, error)
 
 	// Delete - Delete Collection
-	Delete(shiftId string) (int64, error)
+	Delete(shiftProfileId string) (int64, error)
 
 	// DeleteAll - DeleteAll Collection
 	DeleteAll() (int64, error)
 }
 
-// NewShiftDao - Contruct Leave Dao
-func NewShiftDao(client utils.Map, businessId string) ShiftDao {
-	var daoShift ShiftDao = nil
+// NewShiftProfileDao - Contruct Leave Dao
+func NewShiftProfileDao(client utils.Map, businessId string) ShiftProfileDao {
+	var daoShift ShiftProfileDao = nil
 
 	// Get DatabaseType and no need to validate error
 	// since the dbType was assigned with correct value after dbService was created
@@ -43,7 +43,7 @@ func NewShiftDao(client utils.Map, businessId string) ShiftDao {
 
 	switch dbType {
 	case db_common.DATABASE_TYPE_MONGODB:
-		daoShift = &mongodb_repository.ShiftMongoDBDao{}
+		daoShift = &mongodb_repository.ShiftProfileMongoDBDao{}
 	case db_common.DATABASE_TYPE_ZAPSDB:
 		// *Not Implemented yet*
 	case db_common.DATABASE_TYPE_MYSQLDB:

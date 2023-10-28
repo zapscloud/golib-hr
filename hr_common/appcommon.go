@@ -21,7 +21,7 @@ const (
 	DbHrLeaves        = DbPrefix + "hr_leaves"
 	DbHrLeaveTypes    = DbPrefix + "hr_leave_types"
 	DbHrHolidays      = DbPrefix + "hr_holidays"
-	DbHrShifts        = DbPrefix + "hr_shifts"
+	DbHrShiftProfiles = DbPrefix + "hr_shift_profiles"
 	DbHrWorkLocations = DbPrefix + "hr_work_locations"
 	DbHrClients       = DbPrefix + "hr_clients"
 	DbHrProjects      = DbPrefix + "hr_projects"
@@ -125,13 +125,8 @@ const (
 	FLD_LEAVE_APPROVED    = "leave_approved"
 	FLD_LEAVE_TYPE        = "leave_type"
 
-	// Shift Table
-	FLD_SHIFT_ID                   = "shift_id"
-	FLD_SHIFT_FROM                 = "shift_from"
-	FLD_SHIFT_TO                   = "shift_to"
-	FLD_SHIFT_DESCRIPTION          = "shift_description"
-	FLD_TYPE_OF_WORK               = "type_of_work"
-	FLD_IS_SHIFT_ROLLOVER_NEXT_DAY = "is_shift_rollover_nextday"
+	// Shift Profile Table
+	FLD_SHIFT_PROFILE_ID = "shift_profile_id"
 
 	// Work Location Table
 	FLD_WORKLOCATION_ID          = "work_location_id"

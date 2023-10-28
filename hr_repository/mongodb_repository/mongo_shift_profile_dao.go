@@ -11,8 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// ShiftMongoDBDao - Leave DAO Repository
-type ShiftMongoDBDao struct {
+// ShiftProfileMongoDBDao - Leave DAO Repository
+type ShiftProfileMongoDBDao struct {
 	client     utils.Map
 	businessId string
 }
@@ -21,19 +21,19 @@ func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func (p *ShiftMongoDBDao) InitializeDao(client utils.Map, businessId string) {
+func (p *ShiftProfileMongoDBDao) InitializeDao(client utils.Map, businessId string) {
 	log.Println("Initialize Leave Mongodb DAO")
 	p.client = client
 	p.businessId = businessId
 }
 
 // List - List all Collections
-func (p *ShiftMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *ShiftProfileMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
 
-	log.Println("Begin - Find All Collection Dao", hr_common.DbHrShifts)
+	log.Println("Begin - Find All Collection Dao", hr_common.DbHrShiftProfiles)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	if err != nil {
 		return nil, err
 	}
@@ -128,17 +128,17 @@ func (p *ShiftMongoDBDao) List(filter string, sort string, skip int64, limit int
 }
 
 // Get - Get account details
-func (p *ShiftMongoDBDao) Get(shiftId string) (utils.Map, error) {
+func (p *ShiftProfileMongoDBDao) Get(shiftProfileId string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("accountMongoDao::Get:: Begin ", shiftId)
+	log.Println("accountMongoDao::Get:: Begin ", shiftProfileId)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	log.Println("Find:: Got Collection ")
 
 	filter := bson.D{
-		{Key: hr_common.FLD_SHIFT_ID, Value: shiftId},
+		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: shiftProfileId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
 
@@ -162,13 +162,13 @@ func (p *ShiftMongoDBDao) Get(shiftId string) (utils.Map, error) {
 }
 
 // Find - Find by code
-func (p *ShiftMongoDBDao) Find(filter string) (utils.Map, error) {
+func (p *ShiftProfileMongoDBDao) Find(filter string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
 	log.Println("accountMongoDao::Find:: Begin ", filter)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	log.Println("Find:: Got Collection ", err)
 
 	bfilter := bson.D{}
@@ -200,10 +200,10 @@ func (p *ShiftMongoDBDao) Find(filter string) (utils.Map, error) {
 }
 
 // Create - Create Collection
-func (p *ShiftMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
+func (p *ShiftProfileMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("Business Leave Save - Begin", indata)
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	if err != nil {
 		return indata, err
 	}
@@ -218,16 +218,16 @@ func (p *ShiftMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 
 	}
 	log.Println("Inserted a single document: ", insertResult.InsertedID)
-	log.Println("Save - End", indata[hr_common.FLD_SHIFT_ID])
+	log.Println("Save - End", indata[hr_common.FLD_SHIFT_PROFILE_ID])
 
 	return indata, err
 }
 
 // Update - Update Collection
-func (p *ShiftMongoDBDao) Update(shiftId string, indata utils.Map) (utils.Map, error) {
+func (p *ShiftProfileMongoDBDao) Update(shiftProfileId string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("Update - Begin")
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -237,7 +237,7 @@ func (p *ShiftMongoDBDao) Update(shiftId string, indata utils.Map) (utils.Map, e
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{
-		{Key: hr_common.FLD_SHIFT_ID, Value: shiftId},
+		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: shiftProfileId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
@@ -251,11 +251,11 @@ func (p *ShiftMongoDBDao) Update(shiftId string, indata utils.Map) (utils.Map, e
 }
 
 // Delete - Delete Collection
-func (p *ShiftMongoDBDao) Delete(shiftId string) (int64, error) {
+func (p *ShiftProfileMongoDBDao) Delete(shiftProfileId string) (int64, error) {
 
-	log.Println("accountMongoDao::Delete - Begin ", shiftId)
+	log.Println("accountMongoDao::Delete - Begin ", shiftProfileId)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	if err != nil {
 		return 0, err
 	}
@@ -266,7 +266,7 @@ func (p *ShiftMongoDBDao) Delete(shiftId string) (int64, error) {
 	})
 
 	filter := bson.D{
-		{Key: hr_common.FLD_SHIFT_ID, Value: shiftId},
+		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: shiftProfileId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
 	res, err := collection.DeleteOne(ctx, filter, opts)
@@ -279,10 +279,10 @@ func (p *ShiftMongoDBDao) Delete(shiftId string) (int64, error) {
 }
 
 // DeleteAll - Delete All Collection
-func (p *ShiftMongoDBDao) DeleteAll() (int64, error) {
+func (p *ShiftProfileMongoDBDao) DeleteAll() (int64, error) {
 
 	log.Println("accountMongoDao::DeleteAll - Begin ")
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShifts)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	if err != nil {
 		return 0, err
 	}
