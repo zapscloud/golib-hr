@@ -33,7 +33,7 @@ type HoursfactorService interface {
 type HoursfactorBaseService struct {
 	db_utils.DatabaseService
 	dbRegion            db_utils.DatabaseService
-	daoShift            hr_repository.HoursfactorDao
+	daoHrsFactor        hr_repository.HoursfactorDao
 	daoPlatformBusiness platform_repository.BusinessDao
 
 	child      HoursfactorService
@@ -74,7 +74,7 @@ func NewHoursfactorService(props utils.Map) (HoursfactorService, error) {
 	p.businessId = businessId
 
 	// Instantiate other services
-	p.daoShift = hr_repository.NewHoursfactorDao(p.dbRegion.GetClient(), p.businessId)
+	p.daoHrsFactor = hr_repository.NewHoursfactorDao(p.dbRegion.GetClient(), p.businessId)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessId)
@@ -101,8 +101,8 @@ func (p *HoursfactorBaseService) List(filter string, sort string, skip int64, li
 
 	log.Println("HoursfactorService::FindAll - Begin")
 
-	daoShift := p.daoShift
-	response, err := daoShift.List(filter, sort, skip, limit)
+	daoHrsFactor := p.daoHrsFactor
+	response, err := daoHrsFactor.List(filter, sort, skip, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (p *HoursfactorBaseService) List(filter string, sort string, skip int64, li
 func (p *HoursfactorBaseService) Get(hoursfactorId string) (utils.Map, error) {
 	log.Printf("HoursfactorService::FindByCode::  Begin %v", hoursfactorId)
 
-	data, err := p.daoShift.Get(hoursfactorId)
+	data, err := p.daoHrsFactor.Get(hoursfactorId)
 	log.Println("HoursfactorService::FindByCode:: End ", err)
 	return data, err
 }
@@ -123,7 +123,7 @@ func (p *HoursfactorBaseService) Get(hoursfactorId string) (utils.Map, error) {
 func (p *HoursfactorBaseService) Find(filter string) (utils.Map, error) {
 	log.Println("HoursfactorService::FindByCode::  Begin ", filter)
 
-	data, err := p.daoShift.Find(filter)
+	data, err := p.daoHrsFactor.Find(filter)
 	log.Println("HoursfactorService::FindByCode:: End ", data, err)
 	return data, err
 }
@@ -145,16 +145,16 @@ func (p *HoursfactorBaseService) Create(indata utils.Map) (utils.Map, error) {
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
 	log.Println("Provided Account ID:", hoursfactorId)
 
-	_, err := p.daoShift.Get(hoursfactorId)
+	_, err := p.daoHrsFactor.Get(hoursfactorId)
 	if err == nil {
 		err := &utils.AppError{
 			ErrorCode:   "S30102",
-			ErrorMsg:    "Existing Shift ID !",
-			ErrorDetail: "Given Shift ID already exist"}
+			ErrorMsg:    "Existing Hours Factor ID !",
+			ErrorDetail: "Given Hours Factor ID already exist"}
 		return indata, err
 	}
 
-	insertResult, err := p.daoShift.Create(indata)
+	insertResult, err := p.daoHrsFactor.Create(indata)
 	if err != nil {
 		return indata, err
 	}
@@ -167,7 +167,7 @@ func (p *HoursfactorBaseService) Update(hoursfactorId string, indata utils.Map) 
 
 	log.Println("HoursfactorService::Update - Begin")
 
-	data, err := p.daoShift.Get(hoursfactorId)
+	data, err := p.daoHrsFactor.Get(hoursfactorId)
 	if err != nil {
 		return data, err
 	}
@@ -176,7 +176,7 @@ func (p *HoursfactorBaseService) Update(hoursfactorId string, indata utils.Map) 
 	delete(indata, hr_common.FLD_HOURSFACTOR_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 
-	data, err = p.daoShift.Update(hoursfactorId, indata)
+	data, err = p.daoHrsFactor.Update(hoursfactorId, indata)
 	log.Println("HoursfactorService::Update - End ", err)
 	return data, err
 }
@@ -186,9 +186,9 @@ func (p *HoursfactorBaseService) Delete(hoursfactorId string, delete_permanent b
 
 	log.Println("HoursfactorService::Delete - Begin", hoursfactorId)
 
-	daoShift := p.daoShift
+	daoHrsFactor := p.daoHrsFactor
 	if delete_permanent {
-		result, err := daoShift.Delete(hoursfactorId)
+		result, err := daoHrsFactor.Delete(hoursfactorId)
 		if err != nil {
 			return err
 		}

@@ -138,7 +138,7 @@ func (p *HoursfactorMongoDBDao) Get(HoursfactoreId string) (utils.Map, error) {
 	log.Println("Find:: Got Collection ")
 
 	filter := bson.D{
-		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: HoursfactoreId},
+		{Key: hr_common.FLD_HOURSFACTOR_ID, Value: HoursfactoreId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
 
@@ -218,7 +218,7 @@ func (p *HoursfactorMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 
 	}
 	log.Println("Inserted a single document: ", insertResult.InsertedID)
-	log.Println("Save - End", indata[hr_common.FLD_SHIFT_PROFILE_ID])
+	log.Println("Save - End", indata[hr_common.FLD_HOURSFACTOR_ID])
 
 	return indata, err
 }
@@ -237,7 +237,7 @@ func (p *HoursfactorMongoDBDao) Update(HoursfactoreId string, indata utils.Map) 
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{
-		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: HoursfactoreId},
+		{Key: hr_common.FLD_HOURSFACTOR_ID, Value: HoursfactoreId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
@@ -266,7 +266,7 @@ func (p *HoursfactorMongoDBDao) Delete(HoursfactoreId string) (int64, error) {
 	})
 
 	filter := bson.D{
-		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: HoursfactoreId},
+		{Key: hr_common.FLD_HOURSFACTOR_ID, Value: HoursfactoreId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
 	res, err := collection.DeleteOne(ctx, filter, opts)
