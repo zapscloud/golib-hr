@@ -45,6 +45,8 @@ func (p *DashboardMongoDBDao) GetDashboardData() (utils.Map, error) {
 	leaveTypeCount, _ := p.getLeaveTypeDetails()
 	work_locationCount, _ := p.getWorkLocationDetails()
 	rolesCount, _ := p.getroleDetails()
+	shift_profileCount, _ := p.getshift_profileDetails()
+	overtimeCount, _ := p.getovertimeDetails()
 
 	// 2. Count different leave types
 	//leaveCounts := make(map[string]int64)
@@ -80,6 +82,12 @@ func (p *DashboardMongoDBDao) GetDashboardData() (utils.Map, error) {
 		},
 		"worklocation_details": utils.Map{
 			"total_worklocation": work_locationCount,
+		},
+		"shift_profile_details": utils.Map{
+			"total_shift_profile": shift_profileCount,
+		},
+		"overtime_details": utils.Map{
+			"total_overtime": overtimeCount,
 		},
 	}
 
@@ -369,6 +377,48 @@ func (p *DashboardMongoDBDao) getWorkLocationDetails() (int64, error) {
 	return totalStaffCnt, nil
 }
 func (p *DashboardMongoDBDao) getroleDetails() (int64, error) {
+	// Create a filter document
+	filterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
+		{Key: db_common.FLD_IS_DELETED, Value: false},
+	}
+
+	// Get the MongoDB collection
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, business_common.DbBusinessRoles)
+	if err != nil {
+		return 0, err
+	}
+
+	// 1. Find Total number of Tokens
+	totalStaffCnt, err := collection.CountDocuments(ctx, filterdoc)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalStaffCnt, nil
+}
+func (p *DashboardMongoDBDao) getshift_profileDetails() (int64, error) {
+	// Create a filter document
+	filterdoc := bson.D{
+		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
+		{Key: db_common.FLD_IS_DELETED, Value: false},
+	}
+
+	// Get the MongoDB collection
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, business_common.DbBusinessRoles)
+	if err != nil {
+		return 0, err
+	}
+
+	// 1. Find Total number of Tokens
+	totalStaffCnt, err := collection.CountDocuments(ctx, filterdoc)
+	if err != nil {
+		return 0, err
+	}
+
+	return totalStaffCnt, nil
+}
+func (p *DashboardMongoDBDao) getovertimeDetails() (int64, error) {
 	// Create a filter document
 	filterdoc := bson.D{
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
