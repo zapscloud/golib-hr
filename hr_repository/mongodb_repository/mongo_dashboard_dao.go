@@ -405,7 +405,7 @@ func (p *DashboardMongoDBDao) getshift_profileDetails() (int64, error) {
 	}
 
 	// Get the MongoDB collection
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, business_common.DbBusinessRoles)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrShiftProfiles)
 	if err != nil {
 		return 0, err
 	}
@@ -426,7 +426,7 @@ func (p *DashboardMongoDBDao) getovertimeDetails() (int64, error) {
 	}
 
 	// Get the MongoDB collection
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, business_common.DbBusinessRoles)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	if err != nil {
 		return 0, err
 	}
