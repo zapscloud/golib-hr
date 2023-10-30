@@ -562,5 +562,26 @@ func (p *AttendanceMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 	// Add it to Aggregate Stage
 	stages = append(stages, lookupStage)
 
+	// Lookup Stage for Overtime ========================================
+	lookupStage = bson.M{
+		hr_common.MONGODB_LOOKUP: bson.M{
+			hr_common.MONGODB_STR_FROM:         hr_common.DbHrOvertimes,
+			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLIENT_INFO + "." + hr_common.FLD_OVERTIME_ID,
+			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_OVERTIME_ID,
+			hr_common.MONGODB_STR_AS:           hr_common.FLD_OVERTIME_INFO,
+			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+				// Remove following fields from result-set
+				{hr_common.MONGODB_PROJECT: bson.M{
+					db_common.FLD_DEFAULT_ID:  0,
+					db_common.FLD_IS_DELETED:  0,
+					db_common.FLD_CREATED_AT:  0,
+					hr_common.FLD_BUSINESS_ID: 0,
+					db_common.FLD_UPDATED_AT:  0}},
+			},
+		},
+	}
+	// Add it to Aggregate Stage
+	stages = append(stages, lookupStage)
+
 	return stages
 }
