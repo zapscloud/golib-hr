@@ -6,8 +6,8 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// HoursfactorDao - Contact DAO Repository
-type HoursfactorDao interface {
+// OvertimeDao - Contact DAO Repository
+type OvertimeDao interface {
 	// InitializeDao
 	InitializeDao(client utils.Map, businessId string)
 
@@ -15,7 +15,7 @@ type HoursfactorDao interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
 
 	// Get - Get Contact Details
-	Get(HoursfactoreId string) (utils.Map, error)
+	Get(overtimeId string) (utils.Map, error)
 
 	// Find - Find by code
 	Find(filter string) (utils.Map, error)
@@ -24,18 +24,18 @@ type HoursfactorDao interface {
 	Create(indata utils.Map) (utils.Map, error)
 
 	// Update - Update Collection
-	Update(HoursfactoreId string, indata utils.Map) (utils.Map, error)
+	Update(overtimeId string, indata utils.Map) (utils.Map, error)
 
 	// Delete - Delete Collection
-	Delete(HoursfactoreId string) (int64, error)
+	Delete(overtimeId string) (int64, error)
 
 	// DeleteAll - DeleteAll Collection
 	DeleteAll() (int64, error)
 }
 
-// NewHoursfactorDao - Contruct Leave Dao
-func NewHoursfactorDao(client utils.Map, businessId string) HoursfactorDao {
-	var daoShift HoursfactorDao = nil
+// NewOvertimeDao - Contruct Leave Dao
+func NewOvertimeDao(client utils.Map, businessId string) OvertimeDao {
+	var daoShift OvertimeDao = nil
 
 	// Get DatabaseType and no need to validate error
 	// since the dbType was assigned with correct value after dbService was created
@@ -43,7 +43,7 @@ func NewHoursfactorDao(client utils.Map, businessId string) HoursfactorDao {
 
 	switch dbType {
 	case db_common.DATABASE_TYPE_MONGODB:
-		daoShift = &mongodb_repository.HoursfactorMongoDBDao{}
+		daoShift = &mongodb_repository.OvertimeMongoDBDao{}
 	case db_common.DATABASE_TYPE_ZAPSDB:
 		// *Not Implemented yet*
 	case db_common.DATABASE_TYPE_MYSQLDB:

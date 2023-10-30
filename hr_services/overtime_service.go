@@ -13,14 +13,14 @@ import (
 	"github.com/zapscloud/golib-utils/utils"
 )
 
-// HoursfactorService - Accounts Service structure
-type HoursfactorService interface {
+// OvertimeService - Accounts Service structure
+type OvertimeService interface {
 	List(filter string, sort string, skip int64, limit int64) (utils.Map, error)
-	Get(hoursfactorId string) (utils.Map, error)
+	Get(overtimeId string) (utils.Map, error)
 	Find(filter string) (utils.Map, error)
 	Create(indata utils.Map) (utils.Map, error)
-	Update(hoursfactorId string, indata utils.Map) (utils.Map, error)
-	Delete(hoursfactorId string, delete_permanent bool) error
+	Update(overtimeId string, indata utils.Map) (utils.Map, error)
+	Delete(overtimeId string, delete_permanent bool) error
 
 	BeginTransaction()
 	CommitTransaction()
@@ -29,14 +29,14 @@ type HoursfactorService interface {
 	EndService()
 }
 
-// HoursfactoreBaseService - Accounts Service structure
-type HoursfactorBaseService struct {
+// OvertimeeBaseService - Accounts Service structure
+type OvertimeBaseService struct {
 	db_utils.DatabaseService
 	dbRegion            db_utils.DatabaseService
-	daoHrsFactor        hr_repository.HoursfactorDao
+	daoHrsFactor        hr_repository.OvertimeDao
 	daoPlatformBusiness platform_repository.BusinessDao
 
-	child      HoursfactorService
+	child      OvertimeService
 	businessId string
 }
 
@@ -44,10 +44,10 @@ func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func NewHoursfactorService(props utils.Map) (HoursfactorService, error) {
+func NewOvertimeService(props utils.Map) (OvertimeService, error) {
 	funcode := hr_common.GetServiceModuleCode() + "M" + "01"
 
-	log.Printf("HoursfactorService::Start ")
+	log.Printf("OvertimeService::Start ")
 
 	// Verify whether the business id data passed
 	businessId, err := utils.GetMemberDataStr(props, hr_common.FLD_BUSINESS_ID)
@@ -55,7 +55,7 @@ func NewHoursfactorService(props utils.Map) (HoursfactorService, error) {
 		return nil, err
 	}
 
-	p := HoursfactorBaseService{}
+	p := OvertimeBaseService{}
 
 	// Open Database Service
 	err = p.OpenDatabaseService(props)
@@ -74,7 +74,7 @@ func NewHoursfactorService(props utils.Map) (HoursfactorService, error) {
 	p.businessId = businessId
 
 	// Instantiate other services
-	p.daoHrsFactor = hr_repository.NewHoursfactorDao(p.dbRegion.GetClient(), p.businessId)
+	p.daoHrsFactor = hr_repository.NewOvertimeDao(p.dbRegion.GetClient(), p.businessId)
 	p.daoPlatformBusiness = platform_repository.NewBusinessDao(p.GetClient())
 
 	_, err = p.daoPlatformBusiness.Get(p.businessId)
@@ -91,15 +91,15 @@ func NewHoursfactorService(props utils.Map) (HoursfactorService, error) {
 	return &p, nil
 }
 
-func (p *HoursfactorBaseService) EndService() {
+func (p *OvertimeBaseService) EndService() {
 	p.CloseDatabaseService()
 	p.dbRegion.CloseDatabaseService()
 }
 
 // List - List All records
-func (p *HoursfactorBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *OvertimeBaseService) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 
-	log.Println("HoursfactorService::FindAll - Begin")
+	log.Println("OvertimeService::FindAll - Begin")
 
 	daoHrsFactor := p.daoHrsFactor
 	response, err := daoHrsFactor.List(filter, sort, skip, limit)
@@ -107,45 +107,45 @@ func (p *HoursfactorBaseService) List(filter string, sort string, skip int64, li
 		return nil, err
 	}
 
-	log.Println("HoursfactorService::FindAll - End ")
+	log.Println("OvertimeService::FindAll - End ")
 	return response, nil
 }
 
 // FindByCode - Find By Code
-func (p *HoursfactorBaseService) Get(hoursfactorId string) (utils.Map, error) {
-	log.Printf("HoursfactorService::FindByCode::  Begin %v", hoursfactorId)
+func (p *OvertimeBaseService) Get(overtimeId string) (utils.Map, error) {
+	log.Printf("OvertimeService::FindByCode::  Begin %v", overtimeId)
 
-	data, err := p.daoHrsFactor.Get(hoursfactorId)
-	log.Println("HoursfactorService::FindByCode:: End ", err)
+	data, err := p.daoHrsFactor.Get(overtimeId)
+	log.Println("OvertimeService::FindByCode:: End ", err)
 	return data, err
 }
 
-func (p *HoursfactorBaseService) Find(filter string) (utils.Map, error) {
-	log.Println("HoursfactorService::FindByCode::  Begin ", filter)
+func (p *OvertimeBaseService) Find(filter string) (utils.Map, error) {
+	log.Println("OvertimeService::FindByCode::  Begin ", filter)
 
 	data, err := p.daoHrsFactor.Find(filter)
-	log.Println("HoursfactorService::FindByCode:: End ", data, err)
+	log.Println("OvertimeService::FindByCode:: End ", data, err)
 	return data, err
 }
 
-func (p *HoursfactorBaseService) Create(indata utils.Map) (utils.Map, error) {
+func (p *OvertimeBaseService) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("UserService::Create - Begin")
 
-	var hoursfactorId string
+	var overtimeId string
 
-	dataval, dataok := indata[hr_common.FLD_HOURSFACTOR_ID]
+	dataval, dataok := indata[hr_common.FLD_OVERTIME_ID]
 	if dataok {
-		hoursfactorId = strings.ToLower(dataval.(string))
+		overtimeId = strings.ToLower(dataval.(string))
 	} else {
-		hoursfactorId = utils.GenerateUniqueId("hfprof")
-		log.Println("Unique Account ID", hoursfactorId)
+		overtimeId = utils.GenerateUniqueId("ot")
+		log.Println("Unique OT ID", overtimeId)
 	}
-	indata[hr_common.FLD_HOURSFACTOR_ID] = hoursfactorId
+	indata[hr_common.FLD_OVERTIME_ID] = overtimeId
 	indata[hr_common.FLD_BUSINESS_ID] = p.businessId
-	log.Println("Provided Account ID:", hoursfactorId)
+	log.Println("Provided OT ID:", overtimeId)
 
-	_, err := p.daoHrsFactor.Get(hoursfactorId)
+	_, err := p.daoHrsFactor.Get(overtimeId)
 	if err == nil {
 		err := &utils.AppError{
 			ErrorCode:   "S30102",
@@ -163,50 +163,50 @@ func (p *HoursfactorBaseService) Create(indata utils.Map) (utils.Map, error) {
 }
 
 // Update - Update Service
-func (p *HoursfactorBaseService) Update(hoursfactorId string, indata utils.Map) (utils.Map, error) {
+func (p *OvertimeBaseService) Update(overtimeId string, indata utils.Map) (utils.Map, error) {
 
-	log.Println("HoursfactorService::Update - Begin")
+	log.Println("OvertimeService::Update - Begin")
 
-	data, err := p.daoHrsFactor.Get(hoursfactorId)
+	data, err := p.daoHrsFactor.Get(overtimeId)
 	if err != nil {
 		return data, err
 	}
 
 	// Delete key fields
-	delete(indata, hr_common.FLD_HOURSFACTOR_ID)
+	delete(indata, hr_common.FLD_OVERTIME_ID)
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 
-	data, err = p.daoHrsFactor.Update(hoursfactorId, indata)
-	log.Println("HoursfactorService::Update - End ", err)
+	data, err = p.daoHrsFactor.Update(overtimeId, indata)
+	log.Println("OvertimeService::Update - End ", err)
 	return data, err
 }
 
 // Delete - Delete Service
-func (p *HoursfactorBaseService) Delete(hoursfactorId string, delete_permanent bool) error {
+func (p *OvertimeBaseService) Delete(overtimeId string, delete_permanent bool) error {
 
-	log.Println("HoursfactorService::Delete - Begin", hoursfactorId)
+	log.Println("OvertimeService::Delete - Begin", overtimeId)
 
 	daoHrsFactor := p.daoHrsFactor
 	if delete_permanent {
-		result, err := daoHrsFactor.Delete(hoursfactorId)
+		result, err := daoHrsFactor.Delete(overtimeId)
 		if err != nil {
 			return err
 		}
 		log.Printf("Delete %v", result)
 	} else {
 		indata := utils.Map{db_common.FLD_IS_DELETED: true}
-		data, err := p.Update(hoursfactorId, indata)
+		data, err := p.Update(overtimeId, indata)
 		if err != nil {
 			return err
 		}
 		log.Println("Update for Delete Flag", data)
 	}
 
-	log.Printf("HoursfactorService::Delete - End")
+	log.Printf("OvertimeService::Delete - End")
 	return nil
 }
 
-func (p *HoursfactorBaseService) errorReturn(err error) (HoursfactorService, error) {
+func (p *OvertimeBaseService) errorReturn(err error) (OvertimeService, error) {
 	// Close the Database Connection
 	p.EndService()
 	return nil, err

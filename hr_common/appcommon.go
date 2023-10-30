@@ -26,7 +26,7 @@ const (
 	DbHrWorkLocations = DbPrefix + "hr_work_locations"
 	DbHrClients       = DbPrefix + "hr_clients"
 	DbHrProjects      = DbPrefix + "hr_projects"
-	DbHrHoursfactors  = DbPrefix + "hr_hours_factors"
+	DbHrOvertimes     = DbPrefix + "hr_overtimes"
 )
 
 const (
@@ -126,7 +126,7 @@ const (
 	FLD_LEAVE_DESCRIPTION = "leave_description"
 	FLD_LEAVE_APPROVED    = "leave_approved"
 	FLD_LEAVE_TYPE        = "leave_type"
-	
+
 	// Shift Table
 	FLD_SHIFT_ID                   = "shift_id"
 	FLD_SHIFT_FROM                 = "shift_from"
@@ -154,10 +154,10 @@ const (
 	FLD_PROJECT_NAME        = "project_name"
 	FLD_PROJECT_DESCRIPTION = "project_description"
 
-	//Hoursfactor Table
-	FLD_HOURSFACTOR_ID          = "hoursfactor_id"
-	FLD_HOURSFACTOR_NAME        = "hoursfactor_name"
-	FLD_HOURSFACTOR_DESCRIPTION = "hoursfactor_description"
+	//Overtime Table
+	FLD_OVERTIME_ID          = "overtime_id"
+	FLD_OVERTIME_NAME        = "overtime_name"
+	FLD_OVERTIME_DESCRIPTION = "overtime_description"
 )
 
 func init() {

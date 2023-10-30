@@ -11,8 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// HoursfactorMongoDBDao - Leave DAO Repository
-type HoursfactorMongoDBDao struct {
+// OvertimeMongoDBDao - Leave DAO Repository
+type OvertimeMongoDBDao struct {
 	client     utils.Map
 	businessId string
 }
@@ -21,19 +21,19 @@ func init() {
 	log.SetFlags(log.Lshortfile | log.LstdFlags | log.Lmicroseconds)
 }
 
-func (p *HoursfactorMongoDBDao) InitializeDao(client utils.Map, businessId string) {
+func (p *OvertimeMongoDBDao) InitializeDao(client utils.Map, businessId string) {
 	log.Println("Initialize Leave Mongodb DAO")
 	p.client = client
 	p.businessId = businessId
 }
 
 // List - List all Collections
-func (p *HoursfactorMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
+func (p *OvertimeMongoDBDao) List(filter string, sort string, skip int64, limit int64) (utils.Map, error) {
 	var results []utils.Map
 
-	log.Println("Begin - Find All Collection Dao", hr_common.DbHrHoursfactors)
+	log.Println("Begin - Find All Collection Dao", hr_common.DbHrOvertimes)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	if err != nil {
 		return nil, err
 	}
@@ -128,17 +128,17 @@ func (p *HoursfactorMongoDBDao) List(filter string, sort string, skip int64, lim
 }
 
 // Get - Get account details
-func (p *HoursfactorMongoDBDao) Get(HoursfactoreId string) (utils.Map, error) {
+func (p *OvertimeMongoDBDao) Get(OvertimeeId string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
-	log.Println("accountMongoDao::Get:: Begin ", HoursfactoreId)
+	log.Println("accountMongoDao::Get:: Begin ", OvertimeeId)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	log.Println("Find:: Got Collection ")
 
 	filter := bson.D{
-		{Key: hr_common.FLD_HOURSFACTOR_ID, Value: HoursfactoreId},
+		{Key: hr_common.FLD_OVERTIME_ID, Value: OvertimeeId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		{Key: db_common.FLD_IS_DELETED, Value: false}}
 
@@ -162,13 +162,13 @@ func (p *HoursfactorMongoDBDao) Get(HoursfactoreId string) (utils.Map, error) {
 }
 
 // Find - Find by code
-func (p *HoursfactorMongoDBDao) Find(filter string) (utils.Map, error) {
+func (p *OvertimeMongoDBDao) Find(filter string) (utils.Map, error) {
 	// Find a single document
 	var result utils.Map
 
 	log.Println("accountMongoDao::Find:: Begin ", filter)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	log.Println("Find:: Got Collection ", err)
 
 	bfilter := bson.D{}
@@ -200,10 +200,10 @@ func (p *HoursfactorMongoDBDao) Find(filter string) (utils.Map, error) {
 }
 
 // Create - Create Collection
-func (p *HoursfactorMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
+func (p *OvertimeMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 
 	log.Println("Business Leave Save - Begin", indata)
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	if err != nil {
 		return indata, err
 	}
@@ -218,16 +218,16 @@ func (p *HoursfactorMongoDBDao) Create(indata utils.Map) (utils.Map, error) {
 
 	}
 	log.Println("Inserted a single document: ", insertResult.InsertedID)
-	log.Println("Save - End", indata[hr_common.FLD_HOURSFACTOR_ID])
+	log.Println("Save - End", indata[hr_common.FLD_OVERTIME_ID])
 
 	return indata, err
 }
 
 // Update - Update Collection
-func (p *HoursfactorMongoDBDao) Update(HoursfactoreId string, indata utils.Map) (utils.Map, error) {
+func (p *OvertimeMongoDBDao) Update(OvertimeeId string, indata utils.Map) (utils.Map, error) {
 
 	log.Println("Update - Begin")
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -237,7 +237,7 @@ func (p *HoursfactorMongoDBDao) Update(HoursfactoreId string, indata utils.Map) 
 	log.Printf("Update - Values %v", indata)
 
 	filter := bson.D{
-		{Key: hr_common.FLD_HOURSFACTOR_ID, Value: HoursfactoreId},
+		{Key: hr_common.FLD_OVERTIME_ID, Value: OvertimeeId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
 	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
@@ -251,11 +251,11 @@ func (p *HoursfactorMongoDBDao) Update(HoursfactoreId string, indata utils.Map) 
 }
 
 // Delete - Delete Collection
-func (p *HoursfactorMongoDBDao) Delete(HoursfactoreId string) (int64, error) {
+func (p *OvertimeMongoDBDao) Delete(OvertimeeId string) (int64, error) {
 
-	log.Println("accountMongoDao::Delete - Begin ", HoursfactoreId)
+	log.Println("accountMongoDao::Delete - Begin ", OvertimeeId)
 
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	if err != nil {
 		return 0, err
 	}
@@ -266,7 +266,7 @@ func (p *HoursfactorMongoDBDao) Delete(HoursfactoreId string) (int64, error) {
 	})
 
 	filter := bson.D{
-		{Key: hr_common.FLD_HOURSFACTOR_ID, Value: HoursfactoreId},
+		{Key: hr_common.FLD_OVERTIME_ID, Value: OvertimeeId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
 	res, err := collection.DeleteOne(ctx, filter, opts)
@@ -279,10 +279,10 @@ func (p *HoursfactorMongoDBDao) Delete(HoursfactoreId string) (int64, error) {
 }
 
 // DeleteAll - Delete All Collection
-func (p *HoursfactorMongoDBDao) DeleteAll() (int64, error) {
+func (p *OvertimeMongoDBDao) DeleteAll() (int64, error) {
 
 	log.Println("accountMongoDao::DeleteAll - Begin ")
-	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrHoursfactors)
+	collection, ctx, err := mongo_utils.GetMongoDbCollection(p.client, hr_common.DbHrOvertimes)
 	if err != nil {
 		return 0, err
 	}
