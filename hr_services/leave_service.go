@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zapscloud/golib-business/business_common"
 	"github.com/zapscloud/golib-dbutils/db_common"
 	"github.com/zapscloud/golib-dbutils/db_utils"
 	"github.com/zapscloud/golib-hr/hr_common"
@@ -179,7 +178,7 @@ func (p *leaveBaseService) Create(indata utils.Map) (utils.Map, error) {
 		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Existing Account ID !", ErrorDetail: "Given Account ID already exist"}
 		return utils.Map{}, err
 	}
-	indata, err = p.convertStrToDateTime(indata)
+	err = p.validateDateTime(indata)
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -207,7 +206,7 @@ func (p *leaveBaseService) Update(leaveId string, indata utils.Map) (utils.Map, 
 	delete(indata, hr_common.FLD_BUSINESS_ID)
 	delete(indata, hr_common.FLD_STAFF_ID)
 
-	indata, err = p.convertStrToDateTime(indata)
+	err = p.validateDateTime(indata)
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -281,40 +280,34 @@ func (p *leaveBaseService) errorReturn(err error) (LeaveService, error) {
 	return nil, err
 }
 
-func (p *leaveBaseService) convertStrToDateTime(indata utils.Map) (utils.Map, error) {
-	// Get TimeZone
-	timeZone, err := utils.GetMemberDataStr(indata, business_common.FLD_BUSINESS_TIMEZONE)
-	if err != nil {
-		err := &utils.AppError{ErrorCode: "S30102", ErrorMsg: "Need Timezone", ErrorDetail: "No TimeZone value passed"}
-		return nil, err
-	}
-	// Delete the timezone information
-	delete(indata, business_common.FLD_BUSINESS_TIMEZONE)
-
-	// Load Location
-	loc, err := time.LoadLocation(timeZone)
-	if err != nil {
-		return nil, err
-	}
+func (p *leaveBaseService) validateDateTime(indata utils.Map) error {
 
 	// Convert Leave_From string to Date Format
 	dateTime, err := utils.GetMemberDataStr(indata, hr_common.FLD_LEAVE_FROM)
 	if err == nil {
-		indata[hr_common.FLD_LEAVE_FROM], err = time.ParseInLocation(time.DateTime, dateTime, loc)
+		_, err = time.Parse(time.DateTime, dateTime)
 		if err != nil {
-			return nil, err
+			err = &utils.AppError{
+				ErrorCode:   "S30102",
+				ErrorMsg:    "Invalid leave_from",
+				ErrorDetail: "leave_from value is invalid"}
+			return err
 		}
 	}
 
 	// Convert Leave_To string to Date Format
 	dateTime, err = utils.GetMemberDataStr(indata, hr_common.FLD_LEAVE_TO)
 	if err == nil {
-		indata[hr_common.FLD_LEAVE_TO], err = time.ParseInLocation(time.DateTime, dateTime, loc)
+		_, err = time.Parse(time.DateTime, dateTime)
 		if err != nil {
-			return nil, err
+			err = &utils.AppError{
+				ErrorCode:   "S30102",
+				ErrorMsg:    "Invalid leave_to",
+				ErrorDetail: "leave_to value is invalid"}
+			return err
 		}
 	}
-	return indata, nil
+	return nil
 }
 
 func (p *leaveBaseService) lookupAppuser(response utils.Map) {
