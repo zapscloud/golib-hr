@@ -276,7 +276,7 @@ func (p *LeaveTypeMongoDBDao) Update(LeaveTypeid string, indata utils.Map) (util
 	filter := bson.D{{Key: hr_common.FLD_LEAVETYPE_ID, Value: LeaveTypeid}}
 	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID})
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: db_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}

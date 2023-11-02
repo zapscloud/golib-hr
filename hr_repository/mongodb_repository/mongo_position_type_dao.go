@@ -240,7 +240,7 @@ func (p *PositionTypeMongoDBDao) Update(account_id string, indata utils.Map) (ut
 		{Key: hr_common.FLD_POSITION_TYPE_ID, Value: account_id},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: db_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}

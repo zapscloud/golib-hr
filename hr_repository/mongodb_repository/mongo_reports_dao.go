@@ -65,7 +65,7 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, aggr string, sor
 	stages := []bson.M{}
 
 	// Remove unwanted fields =======================
-	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
+	unsetStage := bson.M{db_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 	// =============================================
 
@@ -79,29 +79,29 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, aggr string, sor
 		filterdoc = append(filterdoc, bson.E{Key: hr_common.FLD_STAFF_ID, Value: p.staffId})
 	}
 
-	matchStage := bson.M{hr_common.MONGODB_MATCH: filterdoc}
+	matchStage := bson.M{db_common.MONGODB_MATCH: filterdoc}
 	stages = append(stages, matchStage)
 	// ==================================================
 
 	// // Add Group stage ================================
 	// groupbyStage := bson.M{
-	// 	hr_common.MONGODB_GROUP: bson.M{
+	// 	db_common.MONGODB_GROUP: bson.M{
 	// 		db_common.FLD_DEFAULT_ID: bson.M{
 	// 			hr_common.FLD_STAFF_ID: "$" + hr_common.FLD_STAFF_ID,
 	// 			"for_date": bson.M{
-	// 				hr_common.MONGODB_DATETOSTRING: bson.M{
-	// 					hr_common.MONGODB_STR_FORMAT: "%Y-%m-%d", "date": "$" + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_DATETIME}},
+	// 				db_common.MONGODB_DATETOSTRING: bson.M{
+	// 					db_common.MONGODB_STR_FORMAT: "%Y-%m-%d", "date": "$" + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_DATETIME}},
 	// 		},
-	// 		hr_common.FLD_GROUP_DOCS: bson.M{hr_common.MONGODB_PUSH: "$$ROOT"},
+	// 		hr_common.FLD_GROUP_DOCS: bson.M{db_common.MONGODB_PUSH: "$$ROOT"},
 	// 	},
 	// }
 
 	if !utils.IsEmpty(aggr) {
 		// Add Group stage ================================
 		groupbyStage := bson.M{
-			hr_common.MONGODB_GROUP: bson.M{
+			db_common.MONGODB_GROUP: bson.M{
 				db_common.FLD_DEFAULT_ID: aggrdoc,
-				hr_common.FLD_GROUP_DOCS: bson.M{hr_common.MONGODB_PUSH: hr_common.MONGODB_ROOT},
+				hr_common.FLD_GROUP_DOCS: bson.M{db_common.MONGODB_PUSH: db_common.MONGODB_ROOT},
 			},
 		}
 		// Add it to Aggregate Stage
@@ -111,7 +111,7 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, aggr string, sor
 
 	// Project Stage =====================================
 	projectStage := bson.M{
-		hr_common.MONGODB_PROJECT: bson.M{
+		db_common.MONGODB_PROJECT: bson.M{
 			hr_common.FLD_GROUP_DOCS + "." + db_common.FLD_CREATED_AT:  0,
 			hr_common.FLD_GROUP_DOCS + "." + db_common.FLD_UPDATED_AT:  0,
 			hr_common.FLD_GROUP_DOCS + "." + db_common.FLD_IS_DELETED:  0,
@@ -132,18 +132,18 @@ func (p *ReportsMongoDBDao) GetAttendanceSummary(filter string, aggr string, sor
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			sortStage := bson.M{hr_common.MONGODB_SORT: sortdoc}
+			sortStage := bson.M{db_common.MONGODB_SORT: sortdoc}
 			stages = append(stages, sortStage)
 		}
 	}
 
 	if skip > 0 {
-		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
+		skipStage := bson.M{db_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		limitStage := bson.M{hr_common.MONGODB_LIMIT: limit}
+		limitStage := bson.M{db_common.MONGODB_LIMIT: limit}
 		stages = append(stages, limitStage)
 	}
 
@@ -192,14 +192,14 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// // Lookup Stage for staff-info =========================
 	// lookupStage1 := bson.M{
-	// 	hr_common.MONGODB_LOOKUP: bson.M{
-	// 		hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
-	// 		hr_common.MONGODB_STR_LOCALFIELD:   "_id." + hr_common.FLD_STAFF_ID,
-	// 		hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-	// 		hr_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
-	// 		hr_common.MONGODB_STR_PIPELINE: []bson.M{
+	// 	db_common.MONGODB_LOOKUP: bson.M{
+	// 		db_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+	// 		db_common.MONGODB_STR_LOCALFIELD:   "_id." + hr_common.FLD_STAFF_ID,
+	// 		db_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+	// 		db_common.MONGODB_STR_AS:           hr_common.FLD_STAFF_INFO,
+	// 		db_common.MONGODB_STR_PIPELINE: []bson.M{
 	// 			// Remove following fields from result-set
-	// 			{hr_common.MONGODB_PROJECT: bson.M{
+	// 			{db_common.MONGODB_PROJECT: bson.M{
 	// 				db_common.FLD_DEFAULT_ID:              0,
 	// 				db_common.FLD_IS_DELETED:              0,
 	// 				db_common.FLD_CREATED_AT:              0,
@@ -214,14 +214,14 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for shift =========================
 	lookupStage2 := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + "type_of_work",
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrShifts,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + "type_of_work",
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
@@ -236,14 +236,14 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Work Location =========================
 	lookupStage3 := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrWorkLocations,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + "work_location",
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_WORKLOCATION_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_WORKLOCATION_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrWorkLocations,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + "work_location",
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_WORKLOCATION_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_WORKLOCATION_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
@@ -258,14 +258,14 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for project =========================
 	lookupStage4 := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrProjects,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_PROJECT_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_PROJECT_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_PROJECT_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrProjects,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_PROJECT_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_PROJECT_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_PROJECT_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
@@ -280,14 +280,14 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for client =========================
 	lookupStage5 := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrClients,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_CLIENT_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_CLIENT_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_CLIENT_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrClients,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_GROUP_DOCS + "." + hr_common.FLD_CLOCK_IN + "." + hr_common.FLD_CLIENT_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_CLIENT_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_CLIENT_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,
@@ -302,14 +302,14 @@ func (p *ReportsMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Overtime ========================================
 	lookupStage6 := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrOvertimes,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLIENT_INFO + "." + hr_common.FLD_OVERTIME_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_OVERTIME_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_OVERTIME_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrOvertimes,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_CLIENT_INFO + "." + hr_common.FLD_OVERTIME_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_OVERTIME_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_OVERTIME_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:  0,
 					db_common.FLD_IS_DELETED:  0,
 					db_common.FLD_CREATED_AT:  0,

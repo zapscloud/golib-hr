@@ -240,7 +240,7 @@ func (p *ShiftProfileMongoDBDao) Update(shiftProfileId string, indata utils.Map)
 		{Key: hr_common.FLD_SHIFT_PROFILE_ID, Value: shiftProfileId},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId}}
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: db_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}

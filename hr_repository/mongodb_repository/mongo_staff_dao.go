@@ -55,7 +55,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	// All Stages
 	stages := []bson.M{}
 	// Remove unwanted fields
-	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
+	unsetStage := bson.M{db_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 
 	// Add Lookup stages
@@ -66,7 +66,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId},
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
-	matchStage := bson.M{hr_common.MONGODB_MATCH: filterdoc}
+	matchStage := bson.M{db_common.MONGODB_MATCH: filterdoc}
 	stages = append(stages, matchStage)
 
 	if len(sort) > 0 {
@@ -75,7 +75,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			sortStage := bson.M{hr_common.MONGODB_SORT: sortdoc}
+			sortStage := bson.M{db_common.MONGODB_SORT: sortdoc}
 			stages = append(stages, sortStage)
 		}
 	}
@@ -86,7 +86,7 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 		filterStages := stages
 
 		// Add Count aggregate
-		countStage := bson.M{hr_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
+		countStage := bson.M{db_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
 		filterStages = append(filterStages, countStage)
 
 		//log.Println("Aggregate for Count ====>", filterStages, stages)
@@ -119,12 +119,12 @@ func (p *StaffMongoDBDao) List(filter string, sort string, skip int64, limit int
 	}
 
 	if skip > 0 {
-		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
+		skipStage := bson.M{db_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		limitStage := bson.M{hr_common.MONGODB_LIMIT: limit}
+		limitStage := bson.M{db_common.MONGODB_LIMIT: limit}
 		stages = append(stages, limitStage)
 	}
 
@@ -279,7 +279,7 @@ func (p *StaffMongoDBDao) Update(account_id string, indata utils.Map) (utils.Map
 	filter := bson.D{{Key: hr_common.FLD_STAFF_ID, Value: account_id}}
 	filter = append(filter, bson.E{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessId})
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: db_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -346,14 +346,14 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Token ========================================
 	lookupStage := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         business_common.DbBusinessUsers,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: business_common.FLD_USER_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_BUSINESS_USER_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         business_common.DbBusinessUsers,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: business_common.FLD_USER_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_BUSINESS_USER_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID: 0,
 					db_common.FLD_IS_DELETED: 0,
 					db_common.FLD_CREATED_AT: 0,
@@ -366,14 +366,14 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// // Lookup Stage for User ==========================================
 	// lookupStage = bson.M{
-	// 	hr_common.MONGODB_LOOKUP: bson.M{
-	// 		hr_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
-	// 		hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
-	// 		hr_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
-	// 		hr_common.MONGODB_STR_AS:           hr_common.FLD_APP_USER_INFO,
-	// 		hr_common.MONGODB_STR_PIPELINE: []bson.M{
+	// 	db_common.MONGODB_LOOKUP: bson.M{
+	// 		db_common.MONGODB_STR_FROM:         platform_common.DbPlatformAppUsers,
+	// 		db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_STAFF_ID,
+	// 		db_common.MONGODB_STR_FOREIGNFIELD: platform_common.FLD_APP_USER_ID,
+	// 		db_common.MONGODB_STR_AS:           hr_common.FLD_APP_USER_INFO,
+	// 		db_common.MONGODB_STR_PIPELINE: []bson.M{
 	// 			// Remove following fields from result-set
-	// 			{hr_common.MONGODB_PROJECT: bson.M{
+	// 			{db_common.MONGODB_PROJECT: bson.M{
 	// 				db_common.FLD_DEFAULT_ID:              0,
 	// 				platform_common.FLD_APP_USER_ID:       0,
 	// 				"auth_key":                            0,
@@ -389,15 +389,15 @@ func (p *StaffMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for Token ========================================
 	lookupStage = bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         business_common.DbBusinessRoles,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_BUSINESS_USER_INFO + "." + business_common.FLD_USER_ROLES + "." + business_common.FLD_ROLE_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: business_common.FLD_ROLE_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_ROLE_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
-				{hr_common.MONGODB_MATCH: bson.M{business_common.FLD_BUSINESS_ID: p.businessId}},
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         business_common.DbBusinessRoles,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_BUSINESS_USER_INFO + "." + business_common.FLD_USER_ROLES + "." + business_common.FLD_ROLE_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: business_common.FLD_ROLE_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_ROLE_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
+				{db_common.MONGODB_MATCH: bson.M{business_common.FLD_BUSINESS_ID: p.businessId}},
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID:        0,
 					db_common.FLD_IS_DELETED:        0,
 					db_common.FLD_CREATED_AT:        0,

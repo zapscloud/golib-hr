@@ -104,16 +104,16 @@ func (p *DashboardMongoDBDao) getLeaveDetails() (utils.Map, error) {
 	// Define aggregation stages
 	stages := []bson.M{
 		{
-			hr_common.MONGODB_MATCH: bson.M{
+			db_common.MONGODB_MATCH: bson.M{
 				hr_common.FLD_BUSINESS_ID: p.businessId,
 				hr_common.FLD_STAFF_ID:    p.staffId,
 				db_common.FLD_IS_DELETED:  false,
 			},
 		},
 		{
-			hr_common.MONGODB_GROUP: bson.M{
+			db_common.MONGODB_GROUP: bson.M{
 				"_id":         "$" + hr_common.FLD_LEAVETYPE_ID,
-				"leave_count": bson.M{hr_common.MONGODB_SUM: 1}, // Summing up leave occurrences
+				"leave_count": bson.M{db_common.MONGODB_SUM: 1}, // Summing up leave occurrences
 			},
 		},
 	}
@@ -150,16 +150,16 @@ func (p *DashboardMongoDBDao) getLeaveDetailsAllStaff() (utils.Map, error) {
 	// Define aggregation stages
 	stages := []bson.M{
 		{
-			hr_common.MONGODB_MATCH: bson.M{
+			db_common.MONGODB_MATCH: bson.M{
 				hr_common.FLD_BUSINESS_ID: p.businessId,
 				//hr_common.FLD_STAFF_ID:    p.staffId,
 				db_common.FLD_IS_DELETED: false,
 			},
 		},
 		{
-			hr_common.MONGODB_GROUP: bson.M{
+			db_common.MONGODB_GROUP: bson.M{
 				"_id":         "$" + hr_common.FLD_LEAVETYPE_ID,
-				"leave_count": bson.M{hr_common.MONGODB_SUM: 1}, // Summing up leave occurrences
+				"leave_count": bson.M{db_common.MONGODB_SUM: 1}, // Summing up leave occurrences
 			},
 		},
 	}

@@ -40,7 +40,6 @@ func (p *ClientMongoDBDao) List(filter string, sort string, skip int64, limit in
 
 	log.Println("Get Collection - Find All Collection Dao", filter, len(filter), sort, len(sort))
 
-
 	filterdoc := bson.D{}
 	if len(filter) > 0 {
 		// filters, _ := strconv.Unquote(string(filter))
@@ -55,7 +54,7 @@ func (p *ClientMongoDBDao) List(filter string, sort string, skip int64, limit in
 	stages := []bson.M{}
 
 	// Remove unwanted fields
-	unsetStage := bson.M{hr_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
+	unsetStage := bson.M{db_common.MONGODB_UNSET: db_common.FLD_DEFAULT_ID}
 	stages = append(stages, unsetStage)
 
 	// Add Lookup stages
@@ -67,7 +66,7 @@ func (p *ClientMongoDBDao) List(filter string, sort string, skip int64, limit in
 		bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
 
 	filterdoc = append(filterdoc, bson.E{Key: db_common.FLD_IS_DELETED, Value: false})
-	matchStage := bson.M{hr_common.MONGODB_MATCH: filterdoc}
+	matchStage := bson.M{db_common.MONGODB_MATCH: filterdoc}
 	stages = append(stages, matchStage)
 
 	if len(sort) > 0 {
@@ -76,7 +75,7 @@ func (p *ClientMongoDBDao) List(filter string, sort string, skip int64, limit in
 		if err != nil {
 			log.Println("Sort Unmarshal Error ", sort)
 		} else {
-			sortStage := bson.M{hr_common.MONGODB_SORT: sortdoc}
+			sortStage := bson.M{db_common.MONGODB_SORT: sortdoc}
 			stages = append(stages, sortStage)
 		}
 	}
@@ -87,7 +86,7 @@ func (p *ClientMongoDBDao) List(filter string, sort string, skip int64, limit in
 		filterStages := stages
 
 		// Add Count aggregate
-		countStage := bson.M{hr_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
+		countStage := bson.M{db_common.MONGODB_COUNT: hr_common.FLD_FILTERED_COUNT}
 		filterStages = append(filterStages, countStage)
 
 		//log.Println("Aggregate for Count ====>", filterStages, stages)
@@ -120,12 +119,12 @@ func (p *ClientMongoDBDao) List(filter string, sort string, skip int64, limit in
 	}
 
 	if skip > 0 {
-		skipStage := bson.M{hr_common.MONGODB_SKIP: skip}
+		skipStage := bson.M{db_common.MONGODB_SKIP: skip}
 		stages = append(stages, skipStage)
 	}
 
 	if limit > 0 {
-		limitStage := bson.M{hr_common.MONGODB_LIMIT: limit}
+		limitStage := bson.M{db_common.MONGODB_LIMIT: limit}
 		stages = append(stages, limitStage)
 	}
 
@@ -299,7 +298,7 @@ func (p *ClientMongoDBDao) Update(client_id string, indata utils.Map) (utils.Map
 		{Key: hr_common.FLD_CLIENT_ID, Value: client_id},
 		{Key: hr_common.FLD_BUSINESS_ID, Value: p.businessID}}
 
-	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: hr_common.MONGODB_SET, Value: indata}})
+	updateResult, err := collection.UpdateOne(ctx, filter, bson.D{{Key: db_common.MONGODB_SET, Value: indata}})
 	if err != nil {
 		return utils.Map{}, err
 	}
@@ -365,14 +364,14 @@ func (p *ClientMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for PlatformAppUsers ========================================
 	lookupStage := bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrShiftProfiles,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_SHIFT_PROFILE_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_PROFILE_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrShiftProfiles,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_SHIFT_PROFILE_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_SHIFT_PROFILE_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_SHIFT_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID: 0,
 					db_common.FLD_IS_DELETED: 0,
 					db_common.FLD_CREATED_AT: 0,
@@ -385,14 +384,14 @@ func (p *ClientMongoDBDao) appendListLookups(stages []bson.M) []bson.M {
 
 	// Lookup Stage for User ==========================================
 	lookupStage = bson.M{
-		hr_common.MONGODB_LOOKUP: bson.M{
-			hr_common.MONGODB_STR_FROM:         hr_common.DbHrOvertimes,
-			hr_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_OVERTIME_ID,
-			hr_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_OVERTIME_ID,
-			hr_common.MONGODB_STR_AS:           hr_common.FLD_OVERTIME_INFO,
-			hr_common.MONGODB_STR_PIPELINE: []bson.M{
+		db_common.MONGODB_LOOKUP: bson.M{
+			db_common.MONGODB_STR_FROM:         hr_common.DbHrOvertimes,
+			db_common.MONGODB_STR_LOCALFIELD:   hr_common.FLD_OVERTIME_ID,
+			db_common.MONGODB_STR_FOREIGNFIELD: hr_common.FLD_OVERTIME_ID,
+			db_common.MONGODB_STR_AS:           hr_common.FLD_OVERTIME_INFO,
+			db_common.MONGODB_STR_PIPELINE: []bson.M{
 				// Remove following fields from result-set
-				{hr_common.MONGODB_PROJECT: bson.M{
+				{db_common.MONGODB_PROJECT: bson.M{
 					db_common.FLD_DEFAULT_ID: 0,
 					db_common.FLD_IS_DELETED: 0,
 					db_common.FLD_CREATED_AT: 0,
